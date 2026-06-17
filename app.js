@@ -1,6 +1,6 @@
 const defaultSegments = [
     { id: "city", name: "Градско (излизане)", distance: 10, mySpeed: 50, allowedSpeed: 50 },
-    { id: "ring", name: "Околовръстен път", distance: 15, mySpeed: 80, allowedSpeed: 60 },
+    { id: "ring", name: "Околовръстен път", distance: 15, mySpeed: 60, allowedSpeed: 60 },
     { id: "country", name: "Извънградски път", distance: 40, mySpeed: 90, allowedSpeed: 90 },
     { id: "trakia", name: "Магистрала Тракия", distance: 120, mySpeed: 140, allowedSpeed: 140 }
 ];
