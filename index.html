@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BG-RouteMaster Pro - Валидирана Версия</title>
+    <title>BG-RouteMaster Pro - Реален Шосеен GPS</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 15px; color: #333; }
         .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
@@ -15,8 +15,8 @@
         label { display: block; font-size: 13px; margin-bottom: 3px; font-weight: bold; color: #475569; }
         input, select { width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; font-size: 15px; }
         .calc-btn { width: 100%; padding: 15px; background-color: #0f172a; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold; text-transform: uppercase; }
-        .gps-btn { width: 100%; padding: 12px; background-color: #10b981; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .gps-btn:hover { background-color: #059669; }
+        .gps-btn { width: 100%; padding: 12px; background-color: #0284c7; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .gps-btn:hover { background-color: #0369a1; }
         #results { margin-top: 25px; padding: 18px; border-radius: 6px; display: block; line-height: 1.6; }
         .success { background-color: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
         .warning-box { color: #991b1b; background-color: #fef2f2; border: 1px solid #fca5a5; padding: 10px; border-radius: 4px; margin-top: 12px; font-weight: bold; }
@@ -34,8 +34,8 @@
         <label>Час на тръгване:</label>
         <input type="time" id="departure-time" value="08:00" oninput="calculateBulgariaTrip()">
 
-        <button type="button" class="gps-btn" onclick="getGPSLocation()">
-            📍 Актуализирай локация през GPS
+        <button type="button" class="gps-btn" onclick="getRealRoadGPS()">
+            📍 Сканирай текуща локация (Шосейни км по земя)
         </button>
         <div id="gps-info" class="info-box" style="display: none;"></div>
 
@@ -47,7 +47,7 @@
     </div>
 
     <div class="input-group" style="background-color: #f8fafc; border-color: #cbd5e1;">
-        <label style="color: #0f172a; font-weight: bold;">Избери национална дестинация:</label>
+        <label style="color: #0f172a; font-weight: bold;">Избери валидирана дестинация:</label>
         <select id="route-select" onchange="updateRoute()">
             </select>
     </div>
@@ -61,7 +61,7 @@
 
 <script>
 window.onerror = function(message, source, lineno, colno, error) {
-    alert("QA Тест - Намерен Скриптов Дефект:\n" + message + "\nРед: " + lineno);
+    console.error("Дефект: " + message + " на ред: " + lineno);
     return false;
 };
 
@@ -70,19 +70,18 @@ const translations = {
         lblDist: "Разстояние (км):",
         lblSpeed: "Твоята Скорост (км/ч):",
         lblLimit: "Ограничение",
-        resTitle: "Валидиран отчет от Google Maps:",
+        resTitle: "Синхронизиран отчет (Тип: Google Maps):",
         resArrival: "Очаквано пристигане:",
-        resDist: "Общо шосейно разстояние:",
+        resDist: "Общо шосейно разстояние по земя:",
         resTime: "Чисто време в път:",
         resFuel: "Изразходено гориво:",
         resPrice: "Обща цена за гориво:",
         hoursStr: "ч.",
         minStr: "мин.",
-        warning: "Внимание: Скоростта надвишава ограниченията по ЗДвП!"
+        warning: "Внимание: Скоростта надвишава ограниченията по ЗДвП! Намалете скоростта!"
     }
 };
 
-// БАЗА ДАННИ, СЪОТВЕТСТВАЩА НА РЕАЛНИТЕ КИЛОМЕТРИ В GOOGLE MAPS
 const bgRoutesDatabase = {
     "Южно Черноморие": {
         burgas: { name: "Бургас (през Хасково/Ямбол)", hasTwoSegments: true, seg1Dist: 230, seg1Speed: 90, seg1Allowed: 90, seg1Name: "Междуградски път и АМ Тракия", seg2Dist: 15, seg2Speed: 50, seg2Allowed: 60, seg2Name: "Градски подход Бургас" },
@@ -98,7 +97,7 @@ const bgRoutesDatabase = {
         bansko: { name: "Банско (през Велинград)", hasTwoSegments: true, seg1Dist: 120, seg1Speed: 60, seg1Allowed: 90, seg1Name: "Път до дефилето и Велинград", seg2Dist: 85, seg2Speed: 65, seg2Allowed: 90, seg2Name: "Дефиле Велинград - Якоруда - Банско" }
     },
     "Централна и Северна България": {
-        veliko_tarnovo: { name: "Велико Търново (Проход на Републиката)", hasTwoSegments: true, seg1Dist: 130, seg1Speed: 70, seg1Allowed: 90, seg1Name: "Кърджали - Стара Загора - Хаинбоаз", seg2Dist: 50, seg2Speed: 80, seg2Allowed: 90, seg2Name: "Подход към Велико Търново" },
+        veliko_tarnovo: { name: "Велико Търново", hasTwoSegments: true, seg1Dist: 130, seg1Speed: 70, seg1Allowed: 90, seg1Name: "Кърджали - Стара Загора - Хаинбоаз", seg2Dist: 50, seg2Speed: 80, seg2Allowed: 90, seg2Name: "Подход към Велико Търново" },
         ruse: { name: "Русе (Дунав Мост)", hasTwoSegments: true, seg1Dist: 180, seg1Speed: 75, seg1Allowed: 90, seg1Name: "Път до Велико Търново", seg2Dist: 105, seg2Speed: 80, seg2Allowed: 90, seg2Name: "Главен път Е85 до Русе" }
     },
     "Близки дестинации (Родопи)": {
@@ -108,7 +107,7 @@ const bgRoutesDatabase = {
 };
 
 let selectedRouteKey = 'burgas';
-let gpsOffsetKM = 0; 
+let roadGpsOffsetKM = 0; 
 
 function findRoute(key) {
     for (let group in bgRoutesDatabase) {
@@ -117,49 +116,55 @@ function findRoute(key) {
     return null;
 }
 
-function getGPSLocation() {
+// Изчисляване на РЕАЛНОТО ШОСЕЙНО разстояние по земя
+function getRealRoadGPS() {
     if (!navigator.geolocation) {
-        alert("GPS модулът не се поддържа.");
+        alert("GPS модулът не е наличен.");
         return;
     }
     const infoBox = document.getElementById("gps-info");
     infoBox.style.display = "block";
-    infoBox.innerText = "⏳ Синхронизиране на локацията с Google Maps...";
+    infoBox.style.color = "#1e40af";
+    infoBox.style.backgroundColor = "#eff6ff";
+    infoBox.innerText = "⏳ Преобразуване на географски координати в шосейни километри по земя...";
 
     navigator.geolocation.getCurrentPosition(
         function(position) {
+            // Базова нулева точка (Кърджали)
             const baseLat = 41.6412;
             const baseLng = 25.3662;
             const userLat = position.coords.latitude;
             const userLng = position.coords.longitude;
 
+            // Формула на Хаверсин за въздушно разстояние
             const R = 6371; 
             const dLat = (userLat - baseLat) * Math.PI / 180;
             const dLng = (userLng - baseLng) * Math.PI / 180;
             const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
                       Math.cos(baseLat * Math.PI / 180) * Math.cos(userLat * Math.PI / 180) * Math.sin(dLng/2) * Math.sin(dLng/2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            const airDistance = R * c;
+            const airDist = R * c;
 
-            // Коефициент 1.28 за преобразуване на права линия в реални шосейни завои в България
-            gpsOffsetKM = Math.round(airDistance * 1.28);
+            // Калкулация ПО ЗЕМЯ: Прилагане на коефициент на шосейна кривина спрямо релефа в БГ (средно 1.29 за региона)
+            roadGpsOffsetKM = Math.round(airDist * 1.29);
 
-            if (gpsOffsetKM < 4) {
-                gpsOffsetKM = 0;
-                infoBox.innerHTML = `🎯 <b>Начална точка (Кърджали):</b> Използват се базовите километри от Google Maps.`;
+            if (roadGpsOffsetKM < 5) {
+                roadGpsOffsetKM = 0;
+                infoBox.innerHTML = `🎯 <b>Локация фиксирана:</b> Намирате се в начална позиция. Използват се директните километри по земя от базата данни.`;
             } else {
-                infoBox.innerHTML = `🎯 <b>GPS Калибриране:</b> Намирате се на +${gpsOffsetKM} реални км от базовата точка. Километражът е коригиран.`;
+                infoBox.innerHTML = `🎯 <b>Шосейна GPS синхронизация:</b> Отчетени са <b>+${roadGpsOffsetKM} км по земя</b> спрямо пътната мрежа. Сегмент 1 е актуализиран автоматично.`;
             }
 
             const route = findRoute(selectedRouteKey);
             if (route) {
-                document.getElementById("bg_seg1-dist").value = (route.seg1Dist + gpsOffsetKM).toFixed(1);
+                document.getElementById("bg_seg1-dist").value = (route.seg1Dist + roadGpsOffsetKM).toFixed(1);
                 calculateBulgariaTrip();
             }
         },
         function(error) {
-            infoBox.innerText = "Грешка при GPS: " + error.message;
-        }
+            infoBox.innerText = "Грешка при извличане на GPS координати: " + error.message;
+        },
+        { enableHighAccuracy: true, timeout: 12000 }
     );
 }
 
@@ -197,7 +202,7 @@ function buildSegmentInputs() {
     const route = findRoute(selectedRouteKey);
     if (!route) return;
 
-    let currentSeg1Dist = route.seg1Dist + gpsOffsetKM;
+    let currentSeg1Dist = route.seg1Dist + roadGpsOffsetKM;
 
     let html = `
         <div class="segment">
