@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BG-RouteMaster - Фиксирана QA Версия</title>
+    <title>BG-RouteMaster Pro - Национална Версия с GPS</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 15px; color: #333; }
-        .container { max-width: 550px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         h2 { text-align: center; color: #1e293b; margin-top: 5px; margin-bottom: 25px; }
         .input-group { background: #f1f5f9; padding: 15px; margin-bottom: 20px; border-radius: 6px; border: 1px solid #cbd5e1; }
         .section-title { font-size: 16px; font-weight: bold; color: #0f172a; border-bottom: 2px solid #94a3b8; padding-bottom: 5px; margin-bottom: 15px; }
@@ -15,21 +15,29 @@
         label { display: block; font-size: 13px; margin-bottom: 3px; font-weight: bold; color: #475569; }
         input, select { width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; font-size: 15px; }
         .calc-btn { width: 100%; padding: 15px; background-color: #0f172a; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold; text-transform: uppercase; }
+        .gps-btn { width: 100%; padding: 12px; background-color: #10b981; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .gps-btn:hover { background-color: #059669; }
         #results { margin-top: 25px; padding: 18px; border-radius: 6px; display: block; line-height: 1.6; }
         .success { background-color: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
         .warning-box { color: #991b1b; background-color: #fef2f2; border: 1px solid #fca5a5; padding: 10px; border-radius: 4px; margin-top: 12px; font-weight: bold; }
+        .info-box { color: #1e40af; background-color: #eff6ff; border: 1px solid #bfdbfe; padding: 10px; border-radius: 4px; margin-bottom: 12px; font-size: 13px; }
         optgroup { font-weight: bold; color: #0f172a; background: #e2e8f0; }
-        option { font-weight: normal; color: #333; }
+        option { font-weight: normal; color: #333; background: white; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>BG-RouteMaster (€)</h2>
+    <h2>BG-RouteMaster Pro (€)</h2>
     
     <div class="input-group">
         <label>Час на тръгване:</label>
         <input type="time" id="departure-time" value="08:00" oninput="calculateBulgariaTrip()">
+
+        <button type="button" class="gps-btn" onclick="getGPSLocation()">
+            📍 Актуализирай разстоянието чрез GPS (по земя)
+        </button>
+        <div id="gps-info" class="info-box" style="display: none;"></div>
 
         <label>Среден разход (л / 100 км):</label>
         <input type="number" id="fuel-consumption" value="6.5" step="0.1" oninput="calculateBulgariaTrip()">
@@ -39,7 +47,7 @@
     </div>
 
     <div class="input-group" style="background-color: #f8fafc; border-color: #cbd5e1;">
-        <label style="color: #0f172a;">Избери дестинация в България:</label>
+        <label style="color: #0f172a; font-weight: bold;">Избери национална дестинация:</label>
         <select id="route-select" onchange="updateRoute()">
             </select>
     </div>
@@ -54,7 +62,7 @@
 <script>
 // === QA ДЕБЪГЕР ===
 window.onerror = function(message, source, lineno, colno, error) {
-    alert("СЛУЧИ СЕ БЪГ!\n\nГрешка: " + message + "\nРед: " + lineno);
+    alert("Хванат дефект!\n\nГрешка: " + message + "\nРед: " + lineno);
     return false;
 };
 
@@ -63,9 +71,9 @@ const translations = {
         lblDist: "Разстояние (км):",
         lblSpeed: "Твоята Скорост (км/ч):",
         lblLimit: "Ограничение",
-        resTitle: "Отчет за пътуването в България:",
+        resTitle: "Национален отчет за пътуването:",
         resArrival: "Очаквано пристигане:",
-        resDist: "Общо разстояние по маршрута:",
+        resDist: "Общо реално шосейно разстояние:",
         resTime: "Чисто време в път:",
         resFuel: "Изразходено гориво:",
         resPrice: "Обща цена за гориво:",
@@ -75,22 +83,35 @@ const translations = {
     }
 };
 
+// МАСИВНА БАЗА ДАННИ С ВСИЧКИ ОСНОВНИ НАПРАВЛЕНИЯ В БЪЛГАРИЯ
 const bgRoutesDatabase = {
     "Южно Черноморие": {
-        burgas: { name: "Бургас (през Хасково/Ямбол)", hasTwoSegments: true, seg1Dist: 195, seg1Speed: 85, seg1Allowed: 90, seg1Name: "Главен път (Кърджали - Бургас)", seg2Dist: 10, seg2Speed: 50, seg2Allowed: 60, seg2Name: "Градска мрежа Бургас" },
-        sozopol: { name: "Созопол (Вътрешен маршрут)", hasTwoSegments: true, seg1Dist: 205, seg1Speed: 85, seg1Allowed: 90, seg1Name: "Път до Бургас", seg2Dist: 34, seg2Speed: 80, seg2Allowed: 90, seg2Name: "Четирилентов път Бургас - Созопол" }
+        burgas: { name: "Бургас (през Ямбол)", hasTwoSegments: true, seg1Dist: 195, seg1Speed: 85, seg1Allowed: 90, seg1Name: "Главен път (Подсегмент А)", seg2Dist: 10, seg2Speed: 50, seg2Allowed: 60, seg2Name: "Градски подход и Околовръстно" },
+        sozopol: { name: "Созопол", hasTwoSegments: true, seg1Dist: 195, seg1Speed: 85, seg1Allowed: 90, seg1Name: "Главен път до Бургас", seg2Dist: 34, seg2Speed: 80, seg2Allowed: 90, seg2Name: "Четирилентов път Бургас - Созопол" },
+        nesebar: { name: "Несебър / Слънчев Бряг", hasTwoSegments: true, seg1Dist: 200, seg1Speed: 85, seg1Allowed: 90, seg1Name: "Път до Бургас", seg2Dist: 40, seg2Speed: 70, seg2Allowed: 90, seg2Name: "Транзитен път Бургас - Несебър" }
     },
-    "Планински дестинации и Родопи": {
-        pamporovo: { name: "Пампорово (през Смолян)", hasTwoSegments: true, seg1Dist: 90, seg1Speed: 65, seg1Allowed: 90, seg1Name: "Републикански път Кърджали - Смолян", seg2Dist: 15, seg2Speed: 50, seg2Allowed: 80, seg2Name: "Планинско изкачване до курорта" },
-        ardino: { name: "Ардино (Дяволски мост)", hasTwoSegments: true, seg1Dist: 32, seg1Speed: 55, seg1Allowed: 90, seg1Name: "Път Кърджали - Ардино", seg2Dist: 8, seg2Speed: 30, seg2Allowed: 90, seg2Name: "Локален тесен път до моста" }
+    "Северно Черноморие": {
+        varna: { name: "Варна (през АМ Хемус връзка)", hasTwoSegments: true, seg1Dist: 230, seg1Speed: 80, seg1Allowed: 90, seg1Name: "Международен път през Ришки/Котленски проход", seg2Dist: 85, seg2Speed: 110, seg2Allowed: 140, seg2Name: "Автомагистрала Хемус към Варна" },
+        balchik: { name: "Балчик", hasTwoSegments: true, seg1Dist: 315, seg1Speed: 85, seg1Allowed: 90, seg1Name: "Маршрут до Варна", seg2Dist: 42, seg2Speed: 75, seg2Allowed: 90, seg2Name: "Панорамен път Варна - Балчик" }
     },
-    "Големи градове": {
-        plovdiv: { name: "Пловдив (през Асеновград)", hasTwoSegments: true, seg1Dist: 85, seg1Speed: 70, seg1Allowed: 90, seg1Name: "Път през Асеновградското дефиле", seg2Dist: 12, seg2Speed: 60, seg2Allowed: 80, seg2Name: "Асеновградско шосе навлизане" },
-        sofia: { name: "София (Връзка с АМ Тракия)", hasTwoSegments: true, seg1Dist: 100, seg1Speed: 75, seg1Allowed: 90, seg1Name: "Кърджали - Включване на магистралата", seg2Dist: 145, seg2Speed: 120, seg2Allowed: 140, seg2Name: "Автомагистрала Тракия до София" }
+    "Столица и Западна България": {
+        sofia: { name: "София (през АМ Тракия)", hasTwoSegments: true, seg1Dist: 100, seg1Speed: 80, seg1Allowed: 90, seg1Name: "Републикански път до Пловдив/връзка Тракия", seg2Dist: 145, seg2Speed: 120, seg2Allowed: 140, seg2Name: "Автомагистрала Тракия до София" },
+        bansko: { name: "Банско (През Велинград/Якоруда)", hasTwoSegments: true, seg1Dist: 110, seg1Speed: 60, seg1Allowed: 90, seg1Name: "Родопски проход до Велинград", seg2Dist: 80, seg2Speed: 65, seg2Allowed: 90, seg2Name: "Път Велинград - Якоруда - Банско" }
+    },
+    "Централна и Северна България": {
+        veliko_tarnovo: { name: "Велико Търново (през Шипка)", hasTwoSegments: true, seg1Dist: 120, seg1Speed: 65, seg1Allowed: 90, seg1Name: "Път до Казанлък и Проход Шипка", seg2Dist: 50, seg2Speed: 75, seg2Allowed: 90, seg2Name: "Габрово - Велико Търново" },
+        ruse: { name: "Русе (Дунав Мост)", hasTwoSegments: true, seg1Dist: 170, seg1Speed: 75, seg1Allowed: 90, seg1Name: "Път до Велико Търново", seg2Dist: 110, seg2Speed: 80, seg2Allowed: 90, seg2Name: "Главен път Русе - Търново (Е85)" },
+        pleven: { name: "Плевен", hasTwoSegments: true, seg1Dist: 160, seg1Speed: 75, seg1Allowed: 90, seg1Name: "Южна България до Троянски проход", seg2Dist: 95, seg2Speed: 80, seg2Allowed: 90, seg2Name: "Троян - Плевен" }
+    },
+    "Близки дестинации (Родопи и Тракия)": {
+        plovdiv: { name: "Пловдив", hasTwoSegments: true, seg1Dist: 85, seg1Speed: 70, seg1Allowed: 90, seg1Name: "Път Кърджали - Асеновград", seg2Dist: 12, seg2Speed: 60, seg2Allowed: 80, seg2Name: "Асеновградско шосе" },
+        pamporovo: { name: "Пампорово", hasTwoSegments: true, seg1Dist: 90, seg1Speed: 60, seg1Allowed: 90, seg1Name: "Път през Смолян", seg2Dist: 15, seg2Speed: 50, seg2Allowed: 80, seg2Name: "Изкачване Пампорово" },
+        ardino: { name: "Ардино (Дяволски мост)", hasTwoSegments: true, seg1Dist: 32, seg1Speed: 55, seg1Allowed: 90, seg1Name: "Път Кърджали - Ардино", seg2Dist: 8, seg2Speed: 30, seg2Allowed: 90, seg2Name: "Локален път до района на моста" }
     }
 };
 
 let selectedRouteKey = 'burgas';
+let gpsOffsetKM = 0; // Допълнителни километри по земя, изчислени чрез GPS
 
 function findRoute(key) {
     for (let group in bgRoutesDatabase) {
@@ -99,6 +120,60 @@ function findRoute(key) {
         }
     }
     return null;
+}
+
+// ГЕОЛОКАЦИЯ: Пресмятане на реално разстояние по земя чрез делта координати
+function getGPSLocation() {
+    if (!navigator.geolocation) {
+        alert("Браузърът Ви не поддържа GPS.");
+        return;
+    }
+    
+    const infoBox = document.getElementById("gps-info");
+    infoBox.style.display = "block";
+    infoBox.innerText = "⏳ Опит за локализиране и калибриране на сензора...";
+
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            // Реални координати на базовата начална точка (Кърджали: ~41.64, 25.37)
+            const baseLat = 41.6412;
+            const baseLng = 25.3662;
+            
+            const userLat = position.coords.latitude;
+            const userLng = position.coords.longitude;
+
+            // Формула на Хаверсин за разстояние по въздух (в км)
+            const R = 6371; 
+            const dLat = (userLat - baseLat) * Math.PI / 180;
+            const dLng = (userLng - baseLng) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(baseLat * Math.PI / 180) * Math.cos(userLat * Math.PI / 180) * Math.sin(dLng/2) * Math.sin(dLng/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            const airDistance = R * c;
+
+            // Коефициент на кривина на пътя в България за преобразуване "въздух -> земя" (средно 1.32)
+            gpsOffsetKM = Math.round(airDistance * 1.32);
+
+            if (gpsOffsetKM < 5) {
+                gpsOffsetKM = 0; // Потребителят е в началната точка
+                infoBox.innerHTML = `🎯 <strong>Локация: Начална точка!</strong> Няма допълнително отклонение по шосейната мрежа.`;
+            } else {
+                infoBox.innerHTML = `🎯 <strong>Успешно GPS свързване!</strong> Намирате се на около ${gpsOffsetKM} км (по земя) от базовата начална точка. Разстоянието е добавено динамично към Сегмент 1!`;
+            }
+
+            // Обновяваме полетата и преизчисляваме
+            const route = findRoute(selectedRouteKey);
+            if (route) {
+                document.getElementById("bg_seg1-dist").value = (route.seg1Dist + gpsOffsetKM).toFixed(1);
+                calculateBulgariaTrip();
+            }
+        },
+        function(error) {
+            infoBox.className = "warning-box";
+            infoBox.innerText = "Грешка при GPS локализация: " + error.message + ". Проверете разрешенията на браузъра.";
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
 }
 
 function populateRoutes() {
@@ -136,11 +211,14 @@ function buildSegmentInputs() {
     const route = findRoute(selectedRouteKey);
     if (!route) return;
 
+    // Вземаме базовата дистанция и добавяме GPS отместването, ако е изчислено
+    let currentSeg1Dist = route.seg1Dist + gpsOffsetKM;
+
     let html = `
         <div class="segment">
-            <h4>🚗 ${route.seg1Name} (${t.lblLimit}: ${route.seg1Allowed})</h4>
+            <h4>🚗 ${route.seg1Name} (${t.lblLimit}: ${route.seg1Allowed} км/ч)</h4>
             <label>${t.lblDist}</label>
-            <input type="number" id="bg_seg1-dist" value="${route.seg1Dist}" step="0.1" oninput="calculateBulgariaTrip()">
+            <input type="number" id="bg_seg1-dist" value="${currentSeg1Dist.toFixed(1)}" step="0.1" oninput="calculateBulgariaTrip()">
             <label>${t.lblSpeed}</label>
             <input type="number" id="bg_seg1-speed" value="${route.seg1Speed}" oninput="calculateBulgariaTrip()">
         </div>
@@ -149,7 +227,7 @@ function buildSegmentInputs() {
     if (route.hasTwoSegments) {
         html += `
             <div class="segment" style="border-left-color: #f59e0b;">
-                <h4>⛰️ ${route.seg2Name} (${t.lblLimit}: ${route.seg2Allowed})</h4>
+                <h4>⛰️ ${route.seg2Name} (${t.lblLimit}: ${route.seg2Allowed} км/ч)</h4>
                 <label>${t.lblDist}</label>
                 <input type="number" id="bg_seg2-dist" value="${route.seg2Dist}" step="0.1" oninput="calculateBulgariaTrip()">
                 <label>${t.lblSpeed}</label>
@@ -204,7 +282,7 @@ function calculateBulgariaTrip() {
         const s2Speed = parseFloat(s2SpeedInput.value) || 0;
         if (s2Dist > 0 && s2Speed > 0) {
             totalTime += s2Dist / s2Speed;
-            totalDistance += s2Dist; // Коригиран дефект тук!
+            totalDistance += s2Dist; // Дефектът е трайно отстранен!
             if (s2Speed > route.seg2Allowed) speedWarning = true;
         }
     }
@@ -237,6 +315,7 @@ function calculateBulgariaTrip() {
     }
 }
 
+// Инициализация
 populateRoutes();
 buildSegmentInputs();
 calculateBulgariaTrip();
