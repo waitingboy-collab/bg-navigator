@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BG-RouteMaster - Изцяло за България</title>
+    <title>BG-RouteMaster - Евро Версия</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 15px; color: #333; }
         .container { max-width: 550px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
@@ -25,7 +25,7 @@
 <body>
 
 <div class="container">
-    <h2>BG-RouteMaster</h2>
+    <h2>BG-RouteMaster (€)</h2>
     
     <div class="input-group">
         <label>Час на тръгване:</label>
@@ -34,8 +34,8 @@
         <label>Среден разход (л / 100 км):</label>
         <input type="number" id="fuel-consumption" value="6.5" step="0.1" oninput="calculateBulgariaTrip()">
 
-        <label>Цена на горивото за 1 литър (лв):</label>
-        <input type="number" id="fuel-price-bgn" value="2.65" step="0.01" oninput="calculateBulgariaTrip()">
+        <label>Цена на горивото за 1 литър (€):</label>
+        <input type="number" id="fuel-price-eur" value="1.35" step="0.01" oninput="calculateBulgariaTrip()">
     </div>
 
     <div class="input-group" style="background-color: #f8fafc; border-color: #cbd5e1;">
@@ -75,7 +75,6 @@ const translations = {
     }
 };
 
-// БАЗА ДАННИ С ЧИСТИ БЪЛГАРСКИ ДЕСТИНАЦИИ И МАРШРУТИ
 const bgRoutesDatabase = {
     "Южно Черноморие": {
         burgas: { name: "Бургас (през Хасково/Ямбол)", hasTwoSegments: true, seg1Dist: 195, seg1Speed: 85, seg1Allowed: 90, seg1Name: "Главен път (Кърджали - Бургас)", seg2Dist: 10, seg2Speed: 50, seg2Allowed: 60, seg2Name: "Градска мрежа Бургас" },
@@ -147,100 +146,4 @@ function buildSegmentInputs() {
         </div>
     `;
 
-    if (route.hasTwoSegments) {
-        html += `
-            <div class="segment" style="border-left-color: #f59e0b;">
-                <h4>⛰️ ${route.seg2Name} (${t.lblLimit}: ${route.seg2Allowed})</h4>
-                <label>${t.lblDist}</label>
-                <input type="number" id="bg_seg2-dist" value="${route.seg2Dist}" step="0.1" oninput="calculateBulgariaTrip()">
-                <label>${t.lblSpeed}</label>
-                <input type="number" id="bg_seg2-speed" value="${route.seg2Speed}" oninput="calculateBulgariaTrip()">
-            </div>
-        `;
-    }
-
-    container.innerHTML = html;
-}
-
-function addMinutesToTime(baseHours, baseMinutes, addedMinutes) {
-    let totalMin = baseMinutes + Math.round(addedMinutes);
-    let totalHr = baseHours + Math.floor(totalMin / 60);
-    totalMin = totalMin % 60;
-    totalHr = totalHr % 24;
-    return `${String(totalHr).padStart(2, '0')}:${String(totalMin).padStart(2, '0')}`;
-}
-
-function calculateBulgariaTrip() {
-    const t = translations.bg;
-    const route = findRoute(selectedRouteKey);
-    if (!route) return;
-
-    const depTimeInput = document.getElementById("departure-time");
-    if (!depTimeInput || !depTimeInput.value) return;
-    
-    const [depHours, depMinutes] = depTimeInput.value.split(":").map(Number);
-    const fuelConsumption = parseFloat(document.getElementById("fuel-consumption").value) || 0;
-    const fuelPriceBGN = parseFloat(document.getElementById("fuel-price-bgn").value) || 0;
-
-    let totalTime = 0;
-    let totalDistance = 0;
-    let speedWarning = false;
-
-    const s1DistInput = document.getElementById("bg_seg1-dist");
-    const s1SpeedInput = document.getElementById("bg_seg1-speed");
-    if (s1DistInput && s1SpeedInput) {
-        const s1Dist = parseFloat(s1DistInput.value) || 0;
-        const s1Speed = parseFloat(s1SpeedInput.value) || 0;
-        if (s1Dist > 0 && s1Speed > 0) {
-            totalTime += s1Dist / s1Speed;
-            totalDistance += s1Dist;
-            if (s1Speed > route.seg1Allowed) speedWarning = true;
-        }
-    }
-
-    const s2DistInput = document.getElementById("bg_seg2-dist");
-    const s2SpeedInput = document.getElementById("bg_seg2-speed");
-    if (route.hasTwoSegments && s2DistInput && s2SpeedInput) {
-        const s2Dist = parseFloat(s2DistInput.value) || 0;
-        const s2Speed = parseFloat(s2SpeedInput.value) || 0;
-        if (s2Dist > 0 && s2Speed > 0) {
-            totalTime += s2Dist / s2Speed;
-            totalDistance += s2Dist;
-            if (s2Speed > route.seg2Allowed) speedWarning = true;
-        }
-    }
-
-    let totalFuelLitres = (totalDistance * fuelConsumption) / 100;
-    let totalFuelCostBGN = totalFuelLitres * fuelPriceBGN;
-
-    const arrivalTimeFormatted = addMinutesToTime(depHours, depMinutes, totalTime * 60);
-    const totalDurationMinutes = totalTime * 60;
-    const durationHours = Math.floor(totalDurationMinutes / 60);
-    const durationMinutes = Math.round(totalDurationMinutes % 60);
-
-    let resultsHTML = `
-        <h3>${t.resTitle}</h3>
-        <p style="font-size: 17px;"><strong>${t.resArrival} <span style="color: #0284c7;">${arrivalTimeFormatted} ${t.hoursStr}</span></strong></p>
-        <p><strong>${t.resDist}</strong> ${totalDistance.toFixed(1)} км</p>
-        <p><strong>${t.resTime}</strong> ${durationHours} ${t.hoursStr} ${durationMinutes} ${t.minStr}</p>
-        <hr style="border: 0; border-top: 1px solid #cbd5e1; margin: 12px 0;">
-        <p>${t.resFuel} ${totalFuelLitres.toFixed(2)} л</p>
-        <p style="font-size: 16px;"><strong>${t.resPrice} <span style="color: #166534;">${totalFuelCostBGN.toFixed(2)} лв.</span></strong></p>
-    `;
-
-    if (speedWarning) {
-        resultsHTML += `<div class="warning-box">${t.warning}</div>`;
-    }
-
-    const resultsDiv = document.getElementById("results");
-    if (resultsDiv) {
-        resultsDiv.innerHTML = resultsHTML;
-    }
-}
-
-populateRoutes();
-buildSegmentInputs();
-calculateBulgariaTrip();
-</script>
-</body>
-</html>
+    if (route.hasTwo
