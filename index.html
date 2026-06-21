@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BG-RouteMaster - Пълна Версия с Маршрути</title>
+    <title>BG-RouteMaster - Изцяло за България</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 15px; color: #333; }
         .container { max-width: 550px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
@@ -15,7 +15,6 @@
         label { display: block; font-size: 13px; margin-bottom: 3px; font-weight: bold; color: #475569; }
         input, select { width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; font-size: 15px; }
         .calc-btn { width: 100%; padding: 15px; background-color: #0f172a; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold; text-transform: uppercase; }
-        .gps-btn { width: 100%; padding: 12px; background-color: #3b82f6; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; font-weight: bold; margin-bottom: 15px; }
         #results { margin-top: 25px; padding: 18px; border-radius: 6px; display: block; line-height: 1.6; }
         .success { background-color: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
         .warning-box { color: #991b1b; background-color: #fef2f2; border: 1px solid #fca5a5; padding: 10px; border-radius: 4px; margin-top: 12px; font-weight: bold; }
@@ -32,10 +31,6 @@
         <label>Час на тръгване:</label>
         <input type="time" id="departure-time" value="08:00" oninput="calculateBulgariaTrip()">
 
-        <button type="button" class="gps-btn" onclick="getGPSLocation()">
-            Намери разстоянието от мен до Маказа
-        </button>
-
         <label>Среден разход (л / 100 км):</label>
         <input type="number" id="fuel-consumption" value="6.5" step="0.1" oninput="calculateBulgariaTrip()">
 
@@ -49,7 +44,7 @@
             </select>
     </div>
     
-    <div class="section-title">Разпределение на отсечките</div>
+    <div class="section-title">Разпределение на вътрешните отсечки</div>
     <div id="bg-segments-container"></div>
 
     <button class="calc-btn" onclick="calculateBulgariaTrip()">Преизчисли маршрута</button>
@@ -76,29 +71,27 @@ const translations = {
         resPrice: "Обща цена за гориво:",
         hoursStr: "ч.",
         minStr: "мин.",
-        warning: "Внимание: Скоростта ви надвишава ограниченията! Внимавайте за камери и патрули!",
-        segPrimary: "Първокласна пътна мрежа / Магистрала",
-        segSecondary: "Регионална / планинска отсечка"
+        warning: "Внимание: Скоростта ви надвишава ограниченията по ЗДвП! Внимавайте за камери на КАТ!"
     }
 };
 
-// БАЗА ДАННИ С РЕАЛНИ ШОФЬОРСКИ КИЛОМЕТРИ ОТ ТВОЯ РЕГИОН
+// БАЗА ДАННИ С ЧИСТИ БЪЛГАРСКИ ДЕСТИНАЦИИ И МАРШРУТИ
 const bgRoutesDatabase = {
-    "Посока Границата": {
-        makaza_main: { name: "ГКПП Маказа (през Подкова)", hasTwoSegments: true, seg1Dist: 46, seg1Speed: 75, seg1Allowed: 90, seg1Name: "Кърджали - Подкова", seg2Dist: 25, seg2Speed: 65, seg2Allowed: 90, seg2Name: "Проход Маказа (Подкова - Граница)" }, // Точно 71 км общо
-        makaza_djebel: { name: "ГКПП Маказа (през Джебел)", hasTwoSegments: true, seg1Dist: 46, seg1Speed: 60, seg1Allowed: 90, seg1Name: "Кърджали - Джебел - Подкова", seg2Dist: 25, seg2Speed: 65, seg2Allowed: 90, seg2Name: "Проход Маказа" }
-    },
     "Южно Черноморие": {
-        burgas: { name: "Бургас (Център)", hasTwoSegments: true, seg1Dist: 195, seg1Speed: 85, seg1Allowed: 90, seg1Name: "Път през Хасково и Ямбол", seg2Dist: 15, seg2Speed: 50, seg2Allowed: 60, seg2Name: "Влизане и градско в Бургас" },
-        sozopol: { name: "Созопол", hasTwoSegments: true, seg1Dist: 195, seg1Speed: 85, seg1Allowed: 90, seg1Name: "Кърджали - Бургас", seg2Dist: 34, seg2Speed: 80, seg2Allowed: 90, seg2Name: "Бургас - Созопол (Четирилентов път)" }
+        burgas: { name: "Бургас (през Хасково/Ямбол)", hasTwoSegments: true, seg1Dist: 195, seg1Speed: 85, seg1Allowed: 90, seg1Name: "Главен път (Кърджали - Бургас)", seg2Dist: 10, seg2Speed: 50, seg2Allowed: 60, seg2Name: "Градска мрежа Бургас" },
+        sozopol: { name: "Созопол (Вътрешен маршрут)", hasTwoSegments: true, seg1Dist: 205, seg1Speed: 85, seg1Allowed: 90, seg1Name: "Път до Бургас", seg2Dist: 34, seg2Speed: 80, seg2Allowed: 90, seg2Name: "Четирилентов път Бургас - Созопол" }
     },
-    "Големи Градове": {
-        plovdiv: { name: "Пловдив", hasTwoSegments: true, seg1Dist: 85, seg1Speed: 70, seg1Allowed: 90, seg1Name: "Път Кърджали - Асеновград", seg2Dist: 15, seg2Speed: 60, seg2Allowed: 80, seg2Name: "Асеновградско шосе до Пловдив" },
-        sofia: { name: "София (през АМ Тракия)", hasTwoSegments: true, seg1Dist: 100, seg1Speed: 75, seg1Allowed: 90, seg1Name: "Кърджали - Включване на АМ Тракия", seg2Dist: 145, seg2Speed: 120, seg2Allowed: 140, seg2Name: "Магистрала Тракия до София" }
+    "Планински дестинации и Родопи": {
+        pamporovo: { name: "Пампорово (през Смолян)", hasTwoSegments: true, seg1Dist: 90, seg1Speed: 65, seg1Allowed: 90, seg1Name: "Републикански път Кърджали - Смолян", seg2Dist: 15, seg2Speed: 50, seg2Allowed: 80, seg2Name: "Планинско изкачване до курорта" },
+        ardino: { name: "Ардино (Дяволски мост)", hasTwoSegments: true, seg1Dist: 32, seg1Speed: 55, seg1Allowed: 90, seg1Name: "Път Кърджали - Ардино", seg2Dist: 8, seg2Speed: 30, seg2Allowed: 90, seg2Name: "Локален тесен път до моста" }
+    },
+    "Големи градове": {
+        plovdiv: { name: "Пловдив (през Асеновград)", hasTwoSegments: true, seg1Dist: 85, seg1Speed: 70, seg1Allowed: 90, seg1Name: "Път през Асеновградското дефиле", seg2Dist: 12, seg2Speed: 60, seg2Allowed: 80, seg2Name: "Асеновградско шосе навлизане" },
+        sofia: { name: "София (Връзка с АМ Тракия)", hasTwoSegments: true, seg1Dist: 100, seg1Speed: 75, seg1Allowed: 90, seg1Name: "Кърджали - Включване на магистралата", seg2Dist: 145, seg2Speed: 120, seg2Allowed: 140, seg2Name: "Автомагистрала Тракия до София" }
     }
 };
 
-let selectedRouteKey = 'makaza_main';
+let selectedRouteKey = 'burgas';
 
 function findRoute(key) {
     for (let group in bgRoutesDatabase) {
@@ -107,23 +100,6 @@ function findRoute(key) {
         }
     }
     return null;
-}
-
-function getGPSLocation() {
-    if (!navigator.geolocation) {
-        alert("Вашият браузър не поддържа GPS локализация.");
-        return;
-    }
-    alert("Сензорът се стартира... Моля, потвърдете споделянето на локация.");
-    navigator.geolocation.getCurrentPosition(
-        function(position) {
-            const distanceRoad = 71;
-            alert("🎯 Локализацията успя!\n\nРазстояние по въздух: ~34 км.\nРеално разстояние с КОЛА до ГКПП Маказа: " + distanceRoad + " км.");
-        },
-        function(error) {
-            alert("Грешка при локализация: " + error.message);
-        }
-    );
 }
 
 function populateRoutes() {
@@ -229,7 +205,7 @@ function calculateBulgariaTrip() {
         const s2Speed = parseFloat(s2SpeedInput.value) || 0;
         if (s2Dist > 0 && s2Speed > 0) {
             totalTime += s2Dist / s2Speed;
-            totalDistance += s2Distance = totalDistance + s2Dist;
+            totalDistance += s2Dist;
             if (s2Speed > route.seg2Allowed) speedWarning = true;
         }
     }
