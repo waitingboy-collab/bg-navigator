@@ -1,0 +1,2204 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BG-RouteMaster Pro — пътен компютър за България</title>
+<meta name="description" content="Прецизен пътен компютър за маршрути в България: час на пристигане, време в път, гориво и разход в евро — изчислени на живо.">
+<meta name="theme-color" content="#FAFAF7">
+<meta name="color-scheme" content="light">
+<meta name="format-detection" content="telephone=no">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230B6E79'/%3E%3Cpath d='M18 45c13 0 9-25 28-25' fill='none' stroke='%23fff' stroke-width='5' stroke-linecap='round'/%3E%3Ccircle cx='18' cy='45' r='5' fill='%23fff'/%3E%3Ccircle cx='46' cy='20' r='7' fill='%23fff'/%3E%3Ccircle cx='46' cy='20' r='2.8' fill='%230B6E79'/%3E%3C/svg%3E">
+
+<meta property="og:type" content="website">
+<meta property="og:locale" content="bg_BG">
+<meta property="og:site_name" content="BG-RouteMaster Pro">
+<meta property="og:title" content="BG-RouteMaster Pro — пътен компютър за България">
+<meta property="og:description" content="Час на пристигане, време в път, гориво и цена в € за маршрути в България — изчислени на живо.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="BG-RouteMaster Pro">
+<meta name="twitter:description" content="Час на пристигане, време в път, гориво и цена в € — изчислени на живо.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap">
+
+<style>
+/* =====================================================================
+   BG-RouteMaster Pro — DESIGN SYSTEM
+   ---------------------------------------------------------------------
+   Усещане: премиум автомобилен „trip computer“ — спокоен, прецизен.
+
+   ЦВЕТОВЕ (само светла тема)
+     --bg          #FAFAF7   топъл off-white фон на страницата
+     --surface     #FFFFFF   карти;  --surface-2 #F4F4EF вътрешни панели
+     --ink         #0F1B2D   основен текст — дълбок тъмносин графит
+     --ink-2       #3E4A5B   вторичен текст      (≈ 8.9:1 върху фона)
+     --ink-3       #5D6877   помощен текст       (≈ 5.6:1, WCAG AA)
+     --accent      #0B6E79   петролено синьо — ЕДИНСТВЕНИЯТ акцент (6:1)
+     --amber       #B45309   само за предупреждения (фон #FFF7E8)
+     --danger      #B42318   само за невалидни полета и GPS грешки
+     --seg-1…4               нюанси на акцента за сегментите на маршрута
+     Бордери: 1px rgba(ink, .08 / .14) — ниска плътност.
+
+   ТИПОГРАФИЯ (с кирилица)
+     Unbounded 500/600 — wordmark и големите числа
+     Onest 400–700     — целият интерфейс
+     Числа: font-variant-numeric: tabular-nums навсякъде
+     Скала: 12 · 13 · 15 · 16 · 17 · 22 · clamp(60px → 108px) за часа
+
+   SPACING — 4px база: 4 · 8 · 12 · 16 · 20 · 24 · 32 · 40 · 48 · 64
+   ЪГЛИ    — 8 · 12 · 16 · 20 · 24 · pill
+   СЕНКИ   — xs / sm / md / lg: меки, многослойни, без тежки ръбове
+   MOTION  — 150/240ms ease-out, count-up 400ms, маршрут 900ms;
+             prefers-reduced-motion изключва всички анимации.
+
+   Ред на секциите: tokens → base → layout → components → utilities → motion
+   ===================================================================== */
+
+/* ============================== TOKENS ============================== */
+:root {
+  color-scheme: light;
+
+  --bg: #FAFAF7;
+  --surface: #FFFFFF;
+  --surface-2: #F4F4EF;
+  --surface-3: #E9E9E2;
+
+  --ink: #0F1B2D;
+  --ink-2: #3E4A5B;
+  --ink-3: #5D6877;
+
+  --line: rgba(15, 27, 45, 0.08);
+  --line-strong: rgba(15, 27, 45, 0.14);
+  --line-hover: rgba(15, 27, 45, 0.26);
+
+  --accent: #0B6E79;
+  --accent-strong: #085760;
+  --accent-soft: #E8F3F2;
+  --accent-ring: rgba(11, 110, 121, 0.24);
+
+  --amber: #B45309;
+  --amber-ink: #7A3A06;
+  --amber-fill: #C27012;
+  --amber-bg: #FFF7E8;
+  --amber-line: #F1D5A3;
+
+  --danger: #B42318;
+  --danger-bg: #FEF2F1;
+  --danger-ring: rgba(180, 35, 24, 0.18);
+
+  --sign-red: #D7261E;
+
+  --seg-1: #0B6E79;
+  --seg-2: #4A979E;
+  --seg-3: #2F4A6B;
+  --seg-4: #7FB5B9;
+
+  --font-ui: "Onest", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Unbounded", "Onest", system-ui, sans-serif;
+
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px; --s-5: 20px;
+  --s-6: 24px; --s-8: 32px; --s-10: 40px; --s-12: 48px; --s-16: 64px;
+
+  --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 20px; --r-2xl: 24px; --r-full: 999px;
+
+  --shadow-xs: 0 1px 2px rgba(15, 27, 45, 0.04);
+  --shadow-sm: 0 1px 2px rgba(15, 27, 45, 0.04), 0 2px 8px -2px rgba(15, 27, 45, 0.05);
+  --shadow-md: 0 1px 2px rgba(15, 27, 45, 0.04), 0 4px 12px -4px rgba(15, 27, 45, 0.08), 0 12px 32px -12px rgba(15, 27, 45, 0.10);
+  --shadow-lg: 0 1px 2px rgba(15, 27, 45, 0.04), 0 8px 24px -8px rgba(15, 27, 45, 0.10), 0 24px 56px -20px rgba(15, 27, 45, 0.16);
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 150ms;
+  --dur: 240ms;
+
+  --gutter: var(--s-4);
+  --tap: 44px;
+}
+
+/* =============================== BASE =============================== */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2, h3, p, ul, ol, dl, dd, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+svg { display: block; }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+:focus:not(:focus-visible) { outline: none; }
+
+/* ============================== LAYOUT ============================== */
+.app {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: var(--s-2) var(--gutter) calc(var(--s-16) + 56px);
+  padding-left: max(var(--gutter), env(safe-area-inset-left));
+  padding-right: max(var(--gutter), env(safe-area-inset-right));
+  overflow-x: clip;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--s-4);
+}
+
+@media (min-width: 960px) {
+  :root { --gutter: var(--s-8); }
+  .app { padding-top: var(--s-4); padding-bottom: var(--s-16); }
+  .layout {
+    grid-template-columns: minmax(0, 1fr) 420px;
+    gap: var(--s-6);
+    align-items: start;
+  }
+  .layout > * { grid-column: 1; }
+  .layout > .hero {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    position: sticky;
+    top: var(--s-6);
+    max-height: calc(100vh - var(--s-12));
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+}
+
+/* ============================ COMPONENTS ============================ */
+
+/* --- Skip link ------------------------------------------------------ */
+.skip-link {
+  position: absolute;
+  left: var(--s-4);
+  top: -100px;
+  z-index: 50;
+  padding: var(--s-3) var(--s-4);
+  background: var(--ink);
+  color: #fff;
+  border-radius: var(--r-md);
+  text-decoration: none;
+  font-weight: 600;
+}
+.skip-link:focus { top: var(--s-4); }
+
+/* --- Masthead ------------------------------------------------------- */
+.masthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding: var(--s-3) 0 var(--s-5);
+}
+.brand { display: flex; align-items: center; gap: var(--s-3); min-width: 0; }
+.brand__mark {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-md);
+  background: var(--accent);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), var(--shadow-sm);
+  display: grid;
+  place-items: center;
+}
+.brand__mark-core { fill: var(--accent); }
+.brand__name {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.brand__tag {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 3px 7px;
+  border-radius: var(--r-full);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+.brand__sub {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+/* --- Card ----------------------------------------------------------- */
+.card {
+  --card-pad: var(--s-4);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-sm);
+  padding: var(--card-pad);
+  min-width: 0;
+}
+@media (min-width: 400px) { .card { --card-pad: var(--s-5); } }
+@media (min-width: 640px) { .card { --card-pad: var(--s-6); } }
+
+.section__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin-bottom: var(--s-5);
+}
+.step {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.section__title {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+.section__hint { font-size: 13px; color: var(--ink-3); }
+
+/* --- Hero / Results ------------------------------------------------- */
+.hero {
+  --card-pad: var(--s-5);
+  border-radius: var(--r-2xl);
+  box-shadow: var(--shadow-lg);
+  padding-top: var(--s-6);
+}
+@media (min-width: 640px) { .hero { --card-pad: var(--s-6); padding-top: var(--s-8); } }
+
+.hero__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-height: 28px;
+}
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 0 var(--accent-ring);
+}
+.day-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--r-full);
+  background: var(--ink);
+  color: #fff;
+  letter-spacing: 0.01em;
+}
+
+.arrival {
+  margin: var(--s-2) 0 var(--s-3);
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(60px, 21vw, 108px);
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.hero__route {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-1) var(--s-2);
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.hero__route strong { font-weight: 600; color: var(--ink); }
+.hero__sep {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--ink-3);
+}
+.hero__notice {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-top: var(--s-3);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--danger);
+}
+.hero__notice::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Metrics grid */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: var(--s-6);
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+@media (min-width: 560px) and (max-width: 959px) {
+  .metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+.metric {
+  background: var(--surface);
+  padding: var(--s-3) var(--s-4) var(--s-4);
+  min-width: 0;
+}
+.metric dt {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.metric__value {
+  margin-top: var(--s-1);
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.unit {
+  margin-left: 3px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--ink-3);
+}
+.approx-sign { margin-right: 2px; color: var(--accent); }
+.metric__note {
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-strong);
+}
+
+/* Route visualisation */
+.route-viz { margin-top: var(--s-6); }
+.route-viz__svg { width: 100%; height: auto; overflow: visible; }
+.route-viz__base {
+  fill: none;
+  stroke: var(--surface-3);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+.route-viz__seg {
+  fill: none;
+  stroke-width: 6;
+  stroke-linecap: butt;
+}
+.route-viz__mask {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 16;
+  stroke-dasharray: 101 101;
+  stroke-dashoffset: 0;
+}
+.route-viz__bound { fill: var(--surface); stroke-width: 2; }
+.route-viz__start { fill: var(--surface); stroke: var(--ink); stroke-width: 2.5; }
+.route-viz__end-halo { fill: var(--accent-ring); }
+.route-viz__end-dot { fill: var(--accent); }
+.route-viz__end-core { fill: #fff; }
+.route-viz__pin { transform-box: fill-box; transform-origin: center; }
+.route-viz__ends {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-top: var(--s-2);
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.route-viz__ends span:last-child { font-weight: 600; color: var(--ink); text-align: right; }
+
+.route-legend {
+  display: grid;
+  gap: var(--s-2);
+  margin-top: var(--s-4);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--line);
+}
+.route-legend li {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: 13px;
+  color: var(--ink-2);
+  min-width: 0;
+}
+.swatch {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--c);
+}
+.route-legend__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.route-legend__km { flex: none; font-weight: 600; color: var(--ink); }
+
+/* Speed alert — amber, never red */
+.alert {
+  display: flex;
+  gap: var(--s-3);
+  margin-top: var(--s-4);
+  padding: var(--s-3) var(--s-4);
+  background: var(--amber-bg);
+  border: 1px solid var(--amber-line);
+  border-radius: var(--r-lg);
+  color: var(--amber-ink);
+}
+.alert__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgba(194, 112, 18, 0.12);
+  color: var(--amber);
+}
+.alert__title { font-size: 14px; font-weight: 600; line-height: 1.4; padding-top: 5px; }
+.alert__list { margin-top: var(--s-1); font-size: 13px; line-height: 1.45; }
+.alert__list li + li { margin-top: 2px; }
+
+/* --- Destinations --------------------------------------------------- */
+.dest { border: 0; margin: 0; padding: 0; min-width: 0; }
+.dest__scroller {
+  display: flex;
+  gap: var(--s-5);
+  margin-inline: calc(-1 * var(--card-pad));
+  padding: var(--s-1) var(--card-pad) var(--s-2);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: var(--card-pad);
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--s-3), #000 calc(100% - var(--s-6)), transparent 100%);
+          mask-image: linear-gradient(to right, transparent 0, #000 var(--s-3), #000 calc(100% - var(--s-6)), transparent 100%);
+}
+.dest__scroller::-webkit-scrollbar { display: none; }
+.dest__group {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  scroll-snap-align: start;
+}
+.dest__group-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.dest__chips { display: flex; gap: var(--s-2); }
+
+@media (min-width: 720px) {
+  .dest__scroller {
+    flex-wrap: wrap;
+    gap: var(--s-5) var(--s-6);
+    margin-inline: 0;
+    padding: 0;
+    overflow: visible;
+    -webkit-mask-image: none;
+            mask-image: none;
+  }
+  .dest__chips { flex-wrap: wrap; }
+}
+
+.chip-wrap { position: relative; }
+.chip {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 124px;
+  min-height: 60px;
+  padding: var(--s-2) var(--s-8) var(--s-2) var(--s-4);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-xs);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color var(--dur-fast) var(--ease-out),
+              background-color var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out),
+              transform var(--dur-fast) var(--ease-out);
+}
+.chip:hover { border-color: var(--line-hover); box-shadow: var(--shadow-sm); }
+.chip:active { transform: scale(0.98); }
+.chip__name { font-size: 15px; font-weight: 600; color: var(--ink); white-space: nowrap; line-height: 1.3; }
+.chip__meta { font-size: 12px; color: var(--ink-3); }
+.chip__check {
+  position: absolute;
+  top: var(--s-2);
+  right: var(--s-2);
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur) var(--ease-out);
+}
+.chip-input:checked + .chip {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent), var(--shadow-sm);
+}
+.chip-input:checked + .chip .chip__meta { color: var(--accent-strong); font-weight: 500; }
+.chip-input:checked + .chip .chip__check { opacity: 1; transform: scale(1); }
+.chip-input:focus-visible + .chip { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* --- GPS ------------------------------------------------------------ */
+.gps {
+  display: grid;
+  gap: var(--s-3);
+  margin-top: var(--s-5);
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--line);
+}
+.gps__hint { font-size: 13px; color: var(--ink-3); }
+@media (min-width: 640px) {
+  .gps { grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: var(--s-4); }
+  .gps__status { grid-column: 1 / -1; }
+}
+.gps__icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  color: var(--accent);
+}
+.gps__icon > * { grid-area: 1 / 1; display: none; }
+.gps__btn[data-state="idle"] .i--locate,
+.gps__btn[data-state="success"] .i--check,
+.gps__btn[data-state="error"] .i--error,
+.gps__btn[data-state="loading"] .spinner { display: block; }
+.gps__btn[data-state="error"] .gps__icon { color: var(--danger); }
+.gps__btn[data-state="loading"] { cursor: progress; color: var(--ink-2); }
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--accent-ring);
+  border-top-color: var(--accent);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  max-width: 100%;
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-md);
+  font-size: 13px;
+  line-height: 1.45;
+  border: 1px solid transparent;
+}
+.pill__dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin-top: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.pill--loading { background: var(--surface-2); color: var(--ink-2); border-color: var(--line); }
+.pill--success { background: var(--accent-soft); color: var(--accent-strong); border-color: rgba(11, 110, 121, 0.16); }
+.pill--error   { background: var(--danger-bg); color: var(--danger); border-color: rgba(180, 35, 24, 0.16); }
+
+/* --- Buttons -------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  min-height: 48px;
+  padding: 0 var(--s-5);
+  border-radius: var(--r-md);
+  border: 1px solid transparent;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  transition: background-color var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out),
+              transform var(--dur-fast) var(--ease-out);
+}
+.btn--secondary {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-xs);
+}
+.btn--secondary:hover { border-color: var(--line-hover); background: #FCFCFA; box-shadow: var(--shadow-sm); }
+.btn:active { transform: translateY(1px) scale(0.99); }
+.btn--block { width: 100%; }
+.btn__icon { width: 18px; height: 18px; color: var(--accent); }
+
+/* --- Form fields ---------------------------------------------------- */
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-4) var(--s-3);
+}
+.field--full { grid-column: 1 / -1; }
+@media (min-width: 640px) {
+  .fields { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-4); }
+  .field--full { grid-column: auto; }
+}
+
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field__label {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+  line-height: 1.3;
+}
+.control {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 48px;
+  padding: 0 var(--s-3) 0 14px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-xs);
+  transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+}
+.control:hover { border-color: var(--line-hover); }
+.control:focus-within { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-ring); }
+.control__input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  height: 46px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 16px;            /* ≥16px: без auto-zoom в iOS */
+  font-weight: 500;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  outline: none;
+  -webkit-appearance: none;
+          appearance: none;
+}
+.control__input::-webkit-date-and-time-value { text-align: left; }
+.control__input::-webkit-calendar-picker-indicator { opacity: 0.55; cursor: pointer; }
+.control__suffix {
+  flex: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.field.is-invalid .control { border-color: var(--danger); }
+.field.is-invalid .control:focus-within { box-shadow: 0 0 0 4px var(--danger-ring); }
+.field__error {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--danger);
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--r-full);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* --- Timeline ------------------------------------------------------- */
+.timeline {
+  --rail: 28px;
+  --rail-x: 9px;
+}
+@media (min-width: 640px) { .timeline { --rail: 40px; --rail-x: 13px; } }
+
+.tl-node,
+.tl-seg { position: relative; padding-left: var(--rail); }
+
+.tl-node {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-2);
+  min-height: 36px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.tl-node__label { font-weight: 600; color: var(--ink); }
+.tl-node__meta { font-size: 12px; color: var(--ink-3); }
+.tl-node::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  left: calc(var(--rail-x) - 8px);
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  margin-top: -8px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 3px solid var(--ink);
+}
+.tl-node::after {
+  content: "";
+  position: absolute;
+  left: calc(var(--rail-x) - 1.5px);
+  width: 3px;
+  background: var(--seg-color);
+}
+.tl-node--start::after { top: 50%; bottom: 0; }
+.tl-node--end::after { top: 0; bottom: 50%; }
+.tl-node--end::before {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-ring);
+}
+
+.tl-seg { padding-top: var(--s-3); padding-bottom: var(--s-3); }
+.tl-seg::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--rail-x) - 1.5px);
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--seg-color);
+}
+.tl-seg + .tl-seg::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  left: calc(var(--rail-x) - 7px);
+  top: -7px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 3px solid var(--seg-color);
+}
+
+.seg {
+  padding: var(--s-4);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+@media (min-width: 640px) { .seg { padding: var(--s-5); } }
+.seg__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-bottom: var(--s-4);
+}
+.seg__eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-3);
+  letter-spacing: 0.02em;
+}
+.seg__name {
+  margin-top: 2px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink);
+}
+.seg__fields { display: grid; gap: var(--s-4); }
+@media (min-width: 720px) {
+  .seg__fields { grid-template-columns: 168px minmax(0, 1fr); gap: var(--s-5); align-items: start; }
+}
+
+/* Road sign badge: white disc, red rim */
+.sign {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #fff;
+  border: 5px solid var(--sign-red);
+  box-shadow: 0 0 0 1px rgba(15, 27, 45, 0.06), var(--shadow-sm);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  line-height: 1;
+}
+
+/* Speed: range + number */
+.speed__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+.control--speed { flex: none; width: 116px; }
+.control--speed .control__input { text-align: right; }
+
+.range {
+  --thumb: 24px;
+  --p: 0.5;
+  --l: 0.5;
+  --fill: var(--accent);
+  position: relative;
+  height: 48px;
+  margin-top: var(--s-1);
+}
+.range.is-over { --fill: var(--amber-fill); }
+.range__input {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 48px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-appearance: none;
+          appearance: none;
+}
+.range__input:focus-visible { outline: none; }
+.range__input::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 6px;
+  background: linear-gradient(to right,
+    var(--fill) 0 calc(var(--thumb) / 2 + (100% - var(--thumb)) * var(--p)),
+    var(--surface-3) 0);
+}
+.range__input::-moz-range-track {
+  height: 6px;
+  border-radius: 6px;
+  background: linear-gradient(to right,
+    var(--fill) 0 calc(var(--thumb) / 2 + (100% - var(--thumb)) * var(--p)),
+    var(--surface-3) 0);
+}
+.range__input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: var(--thumb);
+  height: var(--thumb);
+  margin-top: calc((6px - var(--thumb)) / 2);
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--fill);
+  box-shadow: 0 1px 2px rgba(15, 27, 45, 0.12), 0 4px 10px -2px rgba(15, 27, 45, 0.18);
+  transition: transform var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+.range__input::-moz-range-thumb {
+  width: var(--thumb);
+  height: var(--thumb);
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--fill);
+  box-shadow: 0 1px 2px rgba(15, 27, 45, 0.12), 0 4px 10px -2px rgba(15, 27, 45, 0.18);
+}
+.range__input:active::-webkit-slider-thumb { transform: scale(1.12); }
+.range__input:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--accent); }
+.range__input:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--accent); }
+
+/* ЗДвП marker on the track */
+.range__limit {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * var(--l));
+  width: 2px;
+  height: 16px;
+  margin: -8px 0 0 -1px;
+  border-radius: 2px;
+  background: var(--sign-red);
+  box-shadow: 0 0 0 1.5px #fff;
+  pointer-events: none;
+}
+.range__limit-label {
+  position: absolute;
+  bottom: calc(100% + 5px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--sign-red);
+  white-space: nowrap;
+  line-height: 1;
+}
+.speed__hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.speed__hint::before {
+  content: "";
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--sign-red);
+}
+.tl-seg.is-over .speed__hint { color: var(--amber-ink); font-weight: 600; }
+.tl-seg.is-over .speed__hint::before { border-color: var(--amber-fill); background: var(--amber-fill); }
+.tl-seg.is-over .control--speed { border-color: var(--amber-fill); }
+.tl-seg.is-over .control--speed .control__suffix { color: var(--amber); }
+.tl-seg.is-over .field.is-invalid .control--speed { border-color: var(--danger); }
+
+.segments__actions { margin-top: var(--s-5); }
+
+/* --- Footer --------------------------------------------------------- */
+.footer {
+  padding: var(--s-8) 0 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+/* --- Floating ETA bar (mobile) ------------------------------------- */
+.eta-bar {
+  position: fixed;
+  z-index: 20;
+  left: var(--s-3);
+  right: var(--s-3);
+  bottom: calc(var(--s-3) + env(safe-area-inset-bottom));
+  max-width: 560px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: 56px;
+  padding: var(--s-2) var(--s-4);
+  background: rgba(255, 255, 255, 0.88);
+  -webkit-backdrop-filter: saturate(1.6) blur(16px);
+          backdrop-filter: saturate(1.6) blur(16px);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(calc(100% + var(--s-6)));
+  pointer-events: none;
+  transition: transform 320ms var(--ease-out), opacity var(--dur) var(--ease-out);
+}
+.eta-bar.is-visible { opacity: 1; transform: none; pointer-events: auto; }
+.eta-bar__label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+.eta-bar__time { font-family: var(--font-display); font-weight: 500; font-size: 22px; letter-spacing: -0.03em; line-height: 1.1; }
+.eta-bar__meta { margin-left: auto; text-align: right; font-size: 13px; color: var(--ink-2); line-height: 1.35; }
+.eta-bar__meta strong { color: var(--ink); font-weight: 600; }
+@media (min-width: 960px) { .eta-bar { display: none; } }
+
+/* ============================ UTILITIES ============================= */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+[hidden] { display: none !important; }
+@media (max-width: 479px) { .hide-xs { display: none; } }
+
+/* ============================== MOTION ============================== */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin-once { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+@keyframes fade-up { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes live-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(11, 110, 121, 0.35); }
+  70%  { box-shadow: 0 0 0 7px rgba(11, 110, 121, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(11, 110, 121, 0); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+  .live-dot { animation: live-pulse 2.4s var(--ease-out) infinite; }
+  .spinner { animation: spin 0.8s linear infinite; }
+  .alert, .pill, .day-badge, .hero__notice { animation: fade-up 280ms var(--ease-out); }
+  .route-viz__mask { transition: stroke-dashoffset 900ms var(--ease-in-out); }
+  .route-viz__seg { transition: stroke-dasharray 400ms var(--ease-out), stroke-dashoffset 400ms var(--ease-out); }
+  .route-viz__bound { transition: cx 400ms var(--ease-out), cy 400ms var(--ease-out); }
+  .btn.is-spinning .btn__icon { animation: spin-once 600ms var(--ease-out); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#main">Към съдържанието</a>
+
+<div class="app">
+  <header class="masthead">
+    <div class="brand">
+      <span class="brand__mark" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24">
+          <path d="M5 18c7 0 5-12 13-12" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+          <circle cx="5" cy="18" r="2.6" fill="#fff"/>
+          <circle cx="18" cy="6" r="3.6" fill="#fff"/>
+          <circle class="brand__mark-core" cx="18" cy="6" r="1.4"/>
+        </svg>
+      </span>
+      <div>
+        <h1 class="brand__name">BG-RouteMaster <span class="brand__tag">PRO</span></h1>
+        <p class="brand__sub">Пътен компютър за маршрути в България</p>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="layout">
+
+    <!-- ============ HERO / РЕЗУЛТАТИ ============ -->
+    <section class="card hero" id="results" aria-labelledby="results-title">
+      <h2 class="visually-hidden" id="results-title">Резултати от маршрута</h2>
+
+      <div class="hero__top">
+        <p class="eyebrow"><span class="live-dot" aria-hidden="true"></span>Очаквано пристигане</p>
+        <span class="day-badge" id="day-badge" hidden>+1 ден</span>
+      </div>
+
+      <p class="arrival" id="arrival"><span id="out-arrival">--:--</span></p>
+
+      <p class="hero__route">
+        <span id="out-route">Начална точка → Бургас</span>
+        <span class="hero__sep" aria-hidden="true"></span>
+        <span>тръгване <strong id="out-departure">08:00</strong></span>
+      </p>
+
+      <p class="hero__notice" id="hero-notice" hidden>Попълнете коректно маркираните полета.</p>
+
+      <dl class="metrics">
+        <div class="metric">
+          <dt>Общо разстояние</dt>
+          <dd class="metric__value"><span class="approx-sign" id="approx-sign" hidden>≈</span><span id="out-distance">—</span><span class="unit">км</span></dd>
+          <dd class="metric__note" id="approx-note" hidden>≈ приблизително</dd>
+        </div>
+        <div class="metric">
+          <dt>Чисто време в път</dt>
+          <dd class="metric__value" id="out-duration">—</dd>
+        </div>
+        <div class="metric">
+          <dt>Гориво</dt>
+          <dd class="metric__value"><span id="out-fuel">—</span><span class="unit">л</span></dd>
+        </div>
+        <div class="metric">
+          <dt>Цена за гориво</dt>
+          <dd class="metric__value"><span id="out-cost">—</span><span class="unit">€</span></dd>
+        </div>
+      </dl>
+
+      <figure class="route-viz">
+        <svg class="route-viz__svg" viewBox="0 0 320 64" aria-hidden="true" focusable="false">
+          <defs>
+            <mask id="route-reveal" maskUnits="userSpaceOnUse" x="-8" y="-8" width="336" height="80">
+              <path id="viz-mask" class="route-viz__mask" d="M14 48 C 72 48 88 16 150 20 S 236 52 306 16" pathLength="100"/>
+            </mask>
+          </defs>
+          <path id="viz-base" class="route-viz__base" d="M14 48 C 72 48 88 16 150 20 S 236 52 306 16"/>
+          <g mask="url(#route-reveal)">
+            <g id="viz-segs"></g>
+            <g id="viz-bounds"></g>
+          </g>
+          <circle class="route-viz__start" cx="14" cy="48" r="5"/>
+          <g transform="translate(306 16)">
+            <g class="route-viz__pin" id="viz-pin">
+              <circle class="route-viz__end-halo" r="11"/>
+              <circle class="route-viz__end-dot" r="7"/>
+              <circle class="route-viz__end-core" r="2.6"/>
+            </g>
+          </g>
+        </svg>
+        <figcaption class="route-viz__ends">
+          <span id="viz-start-label">Начална точка</span>
+          <span id="viz-end-label">Бургас</span>
+        </figcaption>
+      </figure>
+
+      <ul class="route-legend" id="route-legend" aria-label="Отсечки на маршрута"></ul>
+
+      <div class="alert" id="speed-alert" hidden>
+        <span class="alert__icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 2.8 19.5h18.4L12 3.5z"/><path d="M12 10v4.2M12 17.2v.1"/></svg>
+        </span>
+        <div>
+          <p class="alert__title">Внимание: Скоростта надвишава ограниченията по ЗДвП!</p>
+          <ul class="alert__list" id="speed-alert-list"></ul>
+        </div>
+      </div>
+
+      <p class="visually-hidden" id="sr-summary" aria-live="polite" aria-atomic="true"></p>
+    </section>
+
+    <!-- ============ 01 · ДЕСТИНАЦИЯ ============ -->
+    <section class="card" aria-labelledby="dest-title">
+      <header class="section__head">
+        <span class="step" aria-hidden="true">01</span>
+        <div>
+          <h2 class="section__title" id="dest-title">Дестинация</h2>
+          <p class="section__hint">Избери национална дестинация</p>
+        </div>
+      </header>
+
+      <fieldset class="dest">
+        <legend class="visually-hidden">Избери национална дестинация</legend>
+        <div class="dest__scroller" id="dest-scroller"></div>
+      </fieldset>
+
+      <div class="gps">
+        <button type="button" class="btn btn--secondary gps__btn" id="gps-btn" data-state="idle" aria-describedby="gps-hint">
+          <span class="gps__icon" aria-hidden="true">
+            <svg class="i--locate" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+            <span class="spinner"></span>
+            <svg class="i--check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+            <svg class="i--error" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.4v.1"/></svg>
+          </span>
+          <span id="gps-label">Изчисли от текущата ми позиция</span>
+        </button>
+        <p class="gps__hint" id="gps-hint">Първата отсечка се преизчислява от вашето местоположение.</p>
+        <div class="gps__status" role="status" aria-live="polite">
+          <p class="pill" id="gps-pill" hidden><span class="pill__dot" aria-hidden="true"></span><span id="gps-pill-text"></span></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 02 · НАСТРОЙКИ ============ -->
+    <section class="card" aria-labelledby="trip-title">
+      <header class="section__head">
+        <span class="step" aria-hidden="true">02</span>
+        <div>
+          <h2 class="section__title" id="trip-title">Настройки на пътуването</h2>
+          <p class="section__hint">Час на тръгване, разход и цена на горивото</p>
+        </div>
+      </header>
+
+      <div class="fields">
+        <div class="field field--full">
+          <label class="field__label" for="departure-time">Час на тръгване</label>
+          <div class="control">
+            <input class="control__input" type="time" id="departure-time" value="08:00" required aria-describedby="departure-time-err">
+          </div>
+          <p class="field__error" id="departure-time-err" hidden></p>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="fuel-consumption">Среден разход<span class="visually-hidden"> (литра на 100 км)</span></label>
+          <div class="control">
+            <input class="control__input" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" id="fuel-consumption" value="6,5" aria-describedby="fuel-consumption-err">
+            <span class="control__suffix" aria-hidden="true">л/100 км</span>
+          </div>
+          <p class="field__error" id="fuel-consumption-err" hidden></p>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="fuel-price-eur">Цена за литър<span class="visually-hidden"> (евро)</span></label>
+          <div class="control">
+            <input class="control__input" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" id="fuel-price-eur" value="1,35" aria-describedby="fuel-price-eur-err">
+            <span class="control__suffix" aria-hidden="true">€</span>
+          </div>
+          <p class="field__error" id="fuel-price-eur-err" hidden></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 03 · ОТСЕЧКИ ============ -->
+    <section class="card" aria-labelledby="segments-title">
+      <header class="section__head">
+        <span class="step" aria-hidden="true">03</span>
+        <div>
+          <h2 class="section__title" id="segments-title">Отсечки на маршрута</h2>
+          <p class="section__hint">Разпределение на вътрешните отсечки</p>
+        </div>
+      </header>
+
+      <ol class="timeline" id="timeline"></ol>
+
+      <div class="segments__actions">
+        <button type="button" class="btn btn--secondary btn--block" id="recalc-btn">
+          <svg class="btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4.5V11h-6.5"/></svg>
+          Преизчисли маршрута
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Изчисленията са ориентировъчни. Спазвайте ограниченията по ЗДвП.</p>
+  </footer>
+</div>
+
+<div class="eta-bar" id="eta-bar" aria-hidden="true">
+  <div>
+    <p class="eta-bar__label">Пристигане</p>
+    <p class="eta-bar__time" id="eta-time">--:--</p>
+  </div>
+  <p class="eta-bar__meta" id="eta-meta"></p>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ===================================================================
+     1. DATA — непроменена
+     =================================================================== */
+
+  // База данни, съдържаща географски координати на крайните дестинации за прецизен GPS разчет
+  const bgRoutesDatabase = {
+      "Южно Черноморие": {
+          burgas: { name: "Бургас", lat: 42.5048, lng: 27.4626, hasTwoSegments: true, seg1Dist: 230, seg1Speed: 90, seg1Allowed: 90, seg1Name: "Шосеен път и АМ Тракия", seg2Dist: 15, seg2Speed: 50, seg2Allowed: 60, seg2Name: "Градски подход Бургас" },
+          sozopol: { name: "Созопол", lat: 42.4172, lng: 27.6946, hasTwoSegments: true, seg1Dist: 245, seg1Speed: 90, seg1Allowed: 90, seg1Name: "Път до Бургас Околовръстно", seg2Dist: 34, seg2Speed: 80, seg2Allowed: 90, seg2Name: "Четирилентов път до Созопол" }
+      },
+      "Северно Черноморие": {
+          varna: { name: "Варна", lat: 43.2141, lng: 27.9147, hasTwoSegments: true, seg1Dist: 300, seg1Speed: 80, seg1Allowed: 90, seg1Name: "Път през Ришки проход", seg2Dist: 85, seg2Speed: 120, seg2Allowed: 140, seg2Name: "АМ Хемус до Варна" }
+      },
+      "Столица и Западна България": {
+          sofia: { name: "София", lat: 42.6977, lng: 23.3219, hasTwoSegments: true, seg1Dist: 107, seg1Speed: 80, seg1Allowed: 90, seg1Name: "Път до връзка с АМ Тракия", seg2Dist: 145, seg2Speed: 120, seg2Allowed: 140, seg2Name: "Автомагистрала Тракия до София" },
+          bansko: { name: "Банско", lat: 41.8383, lng: 23.4885, hasTwoSegments: true, seg1Dist: 120, seg1Speed: 60, seg1Allowed: 90, seg1Name: "Път до Велинград", seg2Dist: 85, seg2Speed: 65, seg2Allowed: 90, seg2Name: "Дефиле Якоруда - Банско" }
+      },
+      "Централна и Северна България": {
+          veliko_tarnovo: { name: "Велико Търново", lat: 43.0757, lng: 25.6172, hasTwoSegments: true, seg1Dist: 130, seg1Speed: 70, seg1Allowed: 90, seg1Name: "Път през Прохода на Републиката", seg2Dist: 50, seg2Speed: 80, seg2Allowed: 90, seg2Name: "Подход Велико Търново" },
+          ruse: { name: "Русе", lat: 43.8356, lng: 25.9657, hasTwoSegments: true, seg1Dist: 180, seg1Speed: 75, seg1Allowed: 90, seg1Name: "Път до Търново", seg2Dist: 105, seg2Speed: 80, seg2Allowed: 90, seg2Name: "Главен път Е85 до Русе" }
+      },
+      "Близки дестинации (Родопи)": {
+          plovdiv: { name: "Пловдив", lat: 42.1354, lng: 24.7453, hasTwoSegments: true, seg1Dist: 84, seg1Speed: 75, seg1Allowed: 90, seg1Name: "Път през Асеновград", seg2Dist: 12, seg2Speed: 55, seg2Allowed: 80, seg2Name: "Вътрешна мрежа Пловдив" }
+      }
+  };
+
+  /* ===================================================================
+     2. CONFIG & TEXT
+     =================================================================== */
+
+  const CONFIG = Object.freeze({
+    defaultRouteKey: 'burgas',
+    speedMin: 20,
+    speedMax: 160,
+    gpsRoadFactor: 1.28,      // права линия → приблизително км по пътя
+    gpsMinFirstSegment: 10,
+    gpsTimeoutMs: 10000,
+    earthRadiusKm: 6371,
+    countUpMs: 400,
+    summaryDelayMs: 700,
+  });
+
+  const TEXT = Object.freeze({
+    originDefault: 'Начална точка',
+    originGps: 'Моята позиция',
+    destination: 'Дестинация',
+    gpsLabel: {
+      idle: 'Изчисли от текущата ми позиция',
+      loading: 'Локализиране…',
+      success: 'Обнови от моята позиция',
+      error: 'Опитай отново',
+    },
+    gpsLocating: 'Локализиране и пренастройване на маршрута…',
+    gpsUnsupported: 'Браузърът не поддържа GPS локализация.',
+    gpsDenied: 'Достъпът до местоположението е отказан. Разрешете го от настройките на браузъра.',
+    gpsUnavailable: 'Местоположението не може да бъде определено в момента.',
+    gpsTimeout: 'Времето за локализиране изтече. Опитайте отново.',
+    gpsGenericError: 'Грешка при GPS синхронизация',
+    warning: 'Внимание: Скоростта надвишава ограниченията по ЗДвП!',
+    invalidNotice: 'Попълнете коректно маркираните полета.',
+    errRequired: 'Полето е задължително.',
+    errNumber: 'Въведете число.',
+    errNegative: 'Стойността не може да е отрицателна.',
+    errSpeedZero: 'Скоростта трябва да е над 0 км/ч.',
+    errTime: 'Изберете час на тръгване.',
+  });
+
+  const SEGMENT_COLORS = ['var(--seg-1)', 'var(--seg-2)', 'var(--seg-3)', 'var(--seg-4)'];
+  const segColor = i => SEGMENT_COLORS[i % SEGMENT_COLORS.length];
+
+  /* ===================================================================
+     3. HELPERS — форматиране, парсване, гео
+     =================================================================== */
+
+  const NUMBER_FORMATS = {
+    0: new Intl.NumberFormat('bg-BG', { maximumFractionDigits: 0 }),
+    1: new Intl.NumberFormat('bg-BG', { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+    2: new Intl.NumberFormat('bg-BG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+  };
+  const fmtNum = (n, digits) => NUMBER_FORMATS[digits].format(n);
+  const fmtInput = n => (Number.isInteger(n) ? String(n) : fmtNum(n, 1));
+  const pad2 = n => String(n).padStart(2, '0');
+  const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+
+  const escapeHTML = s => String(s).replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+
+  // Минути от полунощ (може да са > 1440) → "ЧЧ:ММ"
+  function fmtClock(absMinutes) {
+    const m = ((Math.round(absMinutes) % 1440) + 1440) % 1440;
+    return pad2(Math.floor(m / 60)) + ':' + pad2(m % 60);
+  }
+
+  // Общите минути се закръглят ВЕДНЪЖ и после се делят → никога „1 ч 60 мин“
+  function splitMinutes(totalMinutes) {
+    const t = Math.max(0, Math.round(totalMinutes));
+    return { h: Math.floor(t / 60), m: t % 60 };
+  }
+  function fmtDuration(totalMinutes) {
+    const { h, m } = splitMinutes(totalMinutes);
+    return h > 0 ? `${h} ч ${m} мин` : `${m} мин`;
+  }
+  function fmtDurationHTML(totalMinutes) {
+    const { h, m } = splitMinutes(totalMinutes);
+    const min = `${m}<span class="unit">мин</span>`;
+    return h > 0 ? `${h}<span class="unit">ч</span> ${min}` : min;
+  }
+  const dayLabel = n => (n === 1 ? '+1 ден' : `+${n} дни`);
+
+  const NUMBER_RE = /^[+-]?(\d+([.,]\d*)?|[.,]\d+)$/;
+  function validateNumber(raw, { positive = false } = {}) {
+    const s = String(raw == null ? '' : raw).replace(/\s/g, '');
+    if (s === '') return { error: TEXT.errRequired };
+    if (!NUMBER_RE.test(s)) return { error: TEXT.errNumber };
+    const value = Number(s.replace(',', '.'));
+    if (value < 0) return { error: TEXT.errNegative };
+    if (positive && value === 0) return { error: TEXT.errSpeedZero };
+    return { value };
+  }
+
+  function parseTime(raw) {
+    const match = /^(\d{1,2}):(\d{2})/.exec(raw || '');
+    if (!match) return null;
+    const h = Number(match[1]);
+    const m = Number(match[2]);
+    return h < 24 && m < 60 ? h * 60 + m : null;
+  }
+
+  const toRad = deg => (deg * Math.PI) / 180;
+  // Формула на Хаверсин — разстояние по въздух
+  function haversineKm(lat1, lng1, lat2, lng2) {
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat / 2) ** 2 +
+              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+    return CONFIG.earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  function findRoute(key) {
+    for (const group in bgRoutesDatabase) {
+      if (bgRoutesDatabase[group][key]) return bgRoutesDatabase[group][key];
+    }
+    return null;
+  }
+
+  // Нормализира seg1*/seg2* полетата към масив. Втори сегмент има само ако е дефиниран.
+  function getRouteSegments(route) {
+    const segments = [
+      { name: route.seg1Name, dist: route.seg1Dist, speed: route.seg1Speed, limit: route.seg1Allowed },
+    ];
+    if (route.hasTwoSegments !== false && route.seg2Dist != null) {
+      segments.push({ name: route.seg2Name, dist: route.seg2Dist, speed: route.seg2Speed, limit: route.seg2Allowed });
+    }
+    return segments;
+  }
+  const routeBaseDistance = route => getRouteSegments(route).reduce((sum, s) => sum + s.dist, 0);
+
+  /* ===================================================================
+     4. STATE
+     =================================================================== */
+
+  const state = {
+    routeKey: CONFIG.defaultRouteKey,
+    origin: 'default',                 // 'default' | 'gps'
+    trip: { departure: '08:00', consumption: '6,5', price: '1,35' },
+    segments: [],                      // { name, limit, dist, speed, approx }
+    touched: new Set(),                // id-та на полета, които са били напуснати
+    gps: { status: 'idle', message: '', requestId: 0 },
+  };
+
+  function loadRoute(key) {
+    const route = findRoute(key);
+    if (!route) return false;
+    state.routeKey = key;
+    state.origin = 'default';
+    state.segments = getRouteSegments(route).map(s => ({
+      name: s.name,
+      limit: s.limit,
+      dist: fmtInput(s.dist),
+      speed: String(s.speed),
+      approx: false,
+    }));
+    return true;
+  }
+
+  const currentRoute = () => findRoute(state.routeKey);
+  const originLabel = () => (state.origin === 'gps' ? TEXT.originGps : TEXT.originDefault);
+
+  /* ===================================================================
+     5. CALCULATE — чиста функция върху state
+     =================================================================== */
+
+  function calculate() {
+    const departure = parseTime(state.trip.departure);
+    const consumption = validateNumber(state.trip.consumption);
+    const price = validateNumber(state.trip.price);
+
+    let totalHours = 0;
+    let totalDistance = 0;
+    let segmentsValid = true;
+    const overLimit = [];
+
+    const perSegment = state.segments.map(seg => {
+      const dist = validateNumber(seg.dist);
+      const speed = validateNumber(seg.speed, { positive: true });
+      const row = {
+        dist: dist.error ? null : dist.value,
+        speed: speed.error ? null : speed.value,
+        distError: dist.error || null,
+        speedError: speed.error || null,
+        hours: null,
+      };
+      if (dist.error || speed.error) {
+        segmentsValid = false;
+        return row;
+      }
+      if (row.dist > 0 && row.speed > 0) {
+        row.hours = row.dist / row.speed;
+        totalHours += row.hours;
+        totalDistance += row.dist;
+        if (row.speed > seg.limit) overLimit.push({ name: seg.name, speed: row.speed, limit: seg.limit });
+      }
+      return row;
+    });
+
+    const tripMinutes = segmentsValid ? Math.round(totalHours * 60) : null;
+    const arrivalMinutes = segmentsValid && departure != null ? departure + tripMinutes : null;
+    const litres = segmentsValid && !consumption.error ? (totalDistance * consumption.value) / 100 : null;
+    const cost = litres != null && !price.error ? litres * price.value : null;
+
+    return {
+      departure,
+      errors: {
+        departure: departure == null ? TEXT.errTime : null,
+        consumption: consumption.error || null,
+        price: price.error || null,
+      },
+      perSegment,
+      segmentsValid,
+      totalDistance: segmentsValid ? totalDistance : null,
+      tripMinutes,
+      arrivalMinutes,
+      dayOffset: arrivalMinutes == null ? 0 : Math.floor(arrivalMinutes / 1440),
+      litres,
+      cost,
+      overLimit,
+      approx: state.segments.some(s => s.approx),
+    };
+  }
+
+  /* ===================================================================
+     6. ANIMATIONS — count-up и рисуване на маршрута
+     =================================================================== */
+
+  const motion = {
+    query: window.matchMedia('(prefers-reduced-motion: reduce)'),
+    tweens: new WeakMap(),
+
+    get enabled() { return !this.query.matches; },
+
+    stop(el) {
+      const t = this.tweens.get(el);
+      if (!t) return null;
+      cancelAnimationFrame(t.raf);
+      clearTimeout(t.timer);
+      return t.value;
+    },
+
+    // Задава стойност без анимация (напр. начална точка за count-up)
+    set(el, value, format, placeholder = '—') {
+      this.stop(el);
+      this.tweens.set(el, { value, raf: 0, timer: 0 });
+      if (value == null) el.textContent = placeholder;
+      else el.innerHTML = format(value);
+    },
+
+    // Плавен count-up (~400ms, ease-out) от текущата към новата стойност
+    count(el, target, format, placeholder = '—') {
+      const from = this.stop(el);
+      if (target == null || from == null || from === target || !this.enabled) {
+        this.set(el, target, format, placeholder);
+        return;
+      }
+
+      let start = null;
+      const tween = { value: from, raf: 0, timer: 0 };
+      this.tweens.set(el, tween);
+      const finish = () => this.set(el, target, format, placeholder);
+      const step = now => {
+        if (start == null) start = now;   // засича се от първия кадър
+        const p = clamp((now - start) / CONFIG.countUpMs, 0, 1);
+        if (p >= 1) { finish(); return; }
+        tween.value = from + (target - from) * (1 - Math.pow(1 - p, 3));
+        el.innerHTML = format(tween.value);
+        tween.raf = requestAnimationFrame(step);
+      };
+      tween.raf = requestAnimationFrame(step);
+      // Предпазител: ако rAF е спрян (таб във фонов режим), крайната стойност пак се показва
+      tween.timer = setTimeout(finish, CONFIG.countUpMs + 120);
+    },
+
+    // Линията на маршрута се „изрисува“ от старта към дестинацията
+    revealRoute(maskPath, pin) {
+      if (!this.enabled) return;
+      maskPath.style.transition = 'none';
+      maskPath.style.strokeDashoffset = '101';
+      maskPath.getBoundingClientRect();           // форсира reflow
+      maskPath.style.transition = '';
+      maskPath.style.strokeDashoffset = '0';
+      if (pin.animate) {
+        pin.animate(
+          [{ opacity: 0, transform: 'scale(0.3)' }, { opacity: 1, transform: 'scale(1)' }],
+          { duration: 360, delay: 720, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'backwards' }
+        );
+      }
+    },
+
+    spinOnce(btn) {
+      btn.classList.remove('is-spinning');
+      void btn.offsetWidth;
+      btn.classList.add('is-spinning');
+    },
+  };
+
+  /* ===================================================================
+     7. RENDER
+     =================================================================== */
+
+  const dom = {};
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+
+  function cacheDom() {
+    const byId = id => document.getElementById(id);
+    Object.assign(dom, {
+      destScroller: byId('dest-scroller'),
+      gpsBtn: byId('gps-btn'),
+      gpsLabel: byId('gps-label'),
+      gpsPill: byId('gps-pill'),
+      gpsPillText: byId('gps-pill-text'),
+      departure: byId('departure-time'),
+      consumption: byId('fuel-consumption'),
+      price: byId('fuel-price-eur'),
+      timeline: byId('timeline'),
+      recalcBtn: byId('recalc-btn'),
+      arrival: byId('arrival'),
+      outArrival: byId('out-arrival'),
+      dayBadge: byId('day-badge'),
+      outRoute: byId('out-route'),
+      outDeparture: byId('out-departure'),
+      heroNotice: byId('hero-notice'),
+      outDistance: byId('out-distance'),
+      approxSign: byId('approx-sign'),
+      approxNote: byId('approx-note'),
+      outDuration: byId('out-duration'),
+      outFuel: byId('out-fuel'),
+      outCost: byId('out-cost'),
+      vizBase: byId('viz-base'),
+      vizMask: byId('viz-mask'),
+      vizSegs: byId('viz-segs'),
+      vizBounds: byId('viz-bounds'),
+      vizPin: byId('viz-pin'),
+      vizStartLabel: byId('viz-start-label'),
+      vizEndLabel: byId('viz-end-label'),
+      legend: byId('route-legend'),
+      alert: byId('speed-alert'),
+      alertList: byId('speed-alert-list'),
+      srSummary: byId('sr-summary'),
+      etaBar: byId('eta-bar'),
+      etaTime: byId('eta-time'),
+      etaMeta: byId('eta-meta'),
+    });
+  }
+
+  /* --- Destinations (chips по региони) ------------------------------- */
+  function renderDestinations() {
+    const checkIcon = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+    let html = '';
+    let groupIndex = 0;
+    for (const group in bgRoutesDatabase) {
+      const groupId = `dest-group-${groupIndex++}`;
+      html += `<div class="dest__group" role="group" aria-labelledby="${groupId}">
+        <p class="dest__group-label" id="${groupId}">${escapeHTML(group)}</p>
+        <div class="dest__chips">`;
+      for (const key in bgRoutesDatabase[group]) {
+        const route = bgRoutesDatabase[group][key];
+        const id = `dest-${key}`;
+        html += `<div class="chip-wrap">
+            <input class="chip-input visually-hidden" type="radio" name="destination" id="${id}" value="${escapeHTML(key)}"${key === state.routeKey ? ' checked' : ''}>
+            <label class="chip" for="${id}">
+              <span class="chip__name">${escapeHTML(route.name)}</span>
+              <span class="chip__meta">${fmtNum(routeBaseDistance(route), 0)} км</span>
+              <span class="chip__check" aria-hidden="true">${checkIcon}</span>
+            </label>
+          </div>`;
+      }
+      html += '</div></div>';
+    }
+    dom.destScroller.innerHTML = html;
+  }
+
+  // Скролва избраната chip-карта във видимата част на хоризонталния списък
+  function revealActiveChip() {
+    const input = dom.destScroller.querySelector('.chip-input:checked');
+    const sc = dom.destScroller;
+    if (!input || sc.scrollWidth <= sc.clientWidth) return;
+    const chip = input.nextElementSibling.getBoundingClientRect();
+    const box = sc.getBoundingClientRect();
+    const behavior = motion.enabled ? 'smooth' : 'auto';
+    if (chip.left < box.left + 16) sc.scrollBy({ left: chip.left - box.left - 24, behavior });
+    else if (chip.right > box.right - 16) sc.scrollBy({ left: chip.right - box.right + 32, behavior });
+  }
+
+  /* --- Segments timeline -------------------------------------------- */
+  const speedRatio = v => (clamp(v, CONFIG.speedMin, CONFIG.speedMax) - CONFIG.speedMin) / (CONFIG.speedMax - CONFIG.speedMin);
+
+  function segmentTemplate(seg, i) {
+    const n = i + 1;
+    const id = `seg-${i}`;
+    const speedNum = validateNumber(seg.speed).value;
+    const rangeValue = clamp(speedNum == null ? seg.limit : speedNum, CONFIG.speedMin, CONFIG.speedMax);
+    return `
+      <li class="tl-seg" data-index="${i}" style="--seg-color:${segColor(i)}">
+        <article class="seg" aria-labelledby="${id}-title">
+          <header class="seg__head">
+            <div>
+              <p class="seg__eyebrow">Отсечка ${n}<span data-out="time"></span></p>
+              <h3 class="seg__name" id="${id}-title">${escapeHTML(seg.name)}</h3>
+            </div>
+            <span class="sign" role="img" aria-label="Ограничение по ЗДвП: ${seg.limit} км/ч"><span aria-hidden="true">${seg.limit}</span></span>
+          </header>
+
+          <div class="seg__fields">
+            <div class="field">
+              <label class="field__label" for="${id}-dist">Разстояние<span class="visually-hidden"> (км)</span>
+                <span class="tag" data-out="approx"${seg.approx ? '' : ' hidden'}>≈ приблизително</span>
+              </label>
+              <div class="control">
+                <input class="control__input" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done"
+                  id="${id}-dist" data-index="${i}" data-field="dist" value="${escapeHTML(seg.dist)}"
+                  aria-describedby="${id}-dist-err">
+                <span class="control__suffix" aria-hidden="true">км</span>
+              </div>
+              <p class="field__error" id="${id}-dist-err" hidden></p>
+            </div>
+
+            <div class="field">
+              <div class="speed__head">
+                <label class="field__label" for="${id}-speed">Твоята скорост<span class="visually-hidden"> (км/ч)</span></label>
+                <div class="control control--speed">
+                  <input class="control__input" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done"
+                    id="${id}-speed" data-index="${i}" data-field="speed" value="${escapeHTML(seg.speed)}"
+                    aria-describedby="${id}-hint ${id}-speed-err">
+                  <span class="control__suffix" aria-hidden="true">км/ч</span>
+                </div>
+              </div>
+              <div class="range" style="--l:${speedRatio(seg.limit)};--p:${speedRatio(rangeValue)}">
+                <input class="range__input" type="range" min="${CONFIG.speedMin}" max="${CONFIG.speedMax}" step="1"
+                  value="${rangeValue}" data-index="${i}" data-field="speed-range"
+                  aria-label="Твоята скорост за отсечка ${n}" aria-describedby="${id}-hint">
+                <span class="range__limit" aria-hidden="true"><span class="range__limit-label">${seg.limit}</span></span>
+              </div>
+              <p class="speed__hint" id="${id}-hint" data-out="hint"></p>
+              <p class="field__error" id="${id}-speed-err" hidden></p>
+            </div>
+          </div>
+        </article>
+      </li>`;
+  }
+
+  function renderTimeline() {
+    const route = currentRoute();
+    const last = state.segments.length - 1;
+    dom.timeline.innerHTML = `
+      <li class="tl-node tl-node--start" style="--seg-color:${segColor(0)}">
+        <span class="tl-node__label">${originLabel()}</span>
+        ${state.origin === 'gps' ? '<span class="tl-node__meta">≈ приблизително</span>' : ''}
+      </li>
+      ${state.segments.map(segmentTemplate).join('')}
+      <li class="tl-node tl-node--end" style="--seg-color:${segColor(last)}">
+        <span class="tl-node__label">${escapeHTML(route.name)}</span>
+        <span class="tl-node__meta">${TEXT.destination}</span>
+      </li>`;
+  }
+
+  // Обновява състоянието на всеки сегмент, без да пресъздава DOM (запазва фокуса)
+  function renderSegmentStates(result, source) {
+    state.segments.forEach((seg, i) => {
+      const row = dom.timeline.querySelector(`.tl-seg[data-index="${i}"]`);
+      if (!row) return;
+      const r = result.perSegment[i];
+      const distInput = row.querySelector('[data-field="dist"]');
+      const speedInput = row.querySelector('[data-field="speed"]');
+      const range = row.querySelector('[data-field="speed-range"]');
+
+      renderFieldError(distInput, r.distError);
+      renderFieldError(speedInput, r.speedError);
+
+      const over = r.speed != null && r.speed > seg.limit;
+      row.classList.toggle('is-over', over);
+      range.parentElement.classList.toggle('is-over', over);
+
+      if (r.speed != null) {
+        const clamped = clamp(r.speed, CONFIG.speedMin, CONFIG.speedMax);
+        if (source !== range) range.value = String(clamped);
+        range.parentElement.style.setProperty('--p', speedRatio(clamped));
+        range.setAttribute('aria-valuetext', `${fmtNum(r.speed, 0)} км/ч`);
+      }
+
+      row.querySelector('[data-out="hint"]').textContent = over
+        ? `+${fmtNum(r.speed - seg.limit, 0)} км/ч над ограничението от ${seg.limit} км/ч`
+        : `Ограничение по ЗДвП: ${seg.limit} км/ч`;
+
+      row.querySelector('[data-out="time"]').textContent = r.hours != null ? ` · ${fmtDuration(r.hours * 60)}` : '';
+      row.querySelector('[data-out="approx"]').hidden = !seg.approx;
+    });
+  }
+
+  /* --- Fields -------------------------------------------------------- */
+  function renderFieldError(input, error) {
+    const field = input.closest('.field');
+    const errorEl = document.getElementById(input.id + '-err');
+    // Празно поле се маркира чак след като потребителят го напусне
+    const show = Boolean(error) && (input.value.trim() !== '' || state.touched.has(input.id));
+    field.classList.toggle('is-invalid', show);
+    input.setAttribute('aria-invalid', show ? 'true' : 'false');
+    errorEl.hidden = !show;
+    errorEl.textContent = show ? error : '';
+  }
+
+  function renderTripFields(result) {
+    renderFieldError(dom.departure, result.errors.departure);
+    renderFieldError(dom.consumption, result.errors.consumption);
+    renderFieldError(dom.price, result.errors.price);
+  }
+
+  /* --- Route visualisation (SVG) ------------------------------------ */
+  const viz = {
+    paths: [],
+    bounds: [],
+
+    build() {
+      dom.vizSegs.replaceChildren();
+      dom.vizBounds.replaceChildren();
+      this.paths = state.segments.map((_, i) => {
+        const p = document.createElementNS(SVG_NS, 'path');
+        p.setAttribute('d', dom.vizBase.getAttribute('d'));
+        p.setAttribute('pathLength', '100');
+        p.setAttribute('class', 'route-viz__seg');
+        p.style.stroke = segColor(i);
+        dom.vizSegs.appendChild(p);
+        return p;
+      });
+      this.bounds = state.segments.slice(1).map((_, k) => {
+        const c = document.createElementNS(SVG_NS, 'circle');
+        c.setAttribute('r', '3.5');
+        c.setAttribute('class', 'route-viz__bound');
+        c.style.stroke = segColor(k + 1);
+        dom.vizBounds.appendChild(c);
+        return c;
+      });
+    },
+
+    // Сегментите са пропорционални на километрите
+    update(result) {
+      const weights = result.perSegment.map(r => (r.dist > 0 ? r.dist : 0));
+      const sum = weights.reduce((a, b) => a + b, 0);
+      const shares = weights.map(w => (sum > 0 ? (w / sum) * 100 : 100 / weights.length));
+      const totalLength = dom.vizBase.getTotalLength();
+      let start = 0;
+      shares.forEach((share, i) => {
+        const path = this.paths[i];
+        path.style.strokeDasharray = `${share} 200`;
+        path.style.strokeDashoffset = String(-start);
+        if (i > 0) {
+          const pt = dom.vizBase.getPointAtLength((totalLength * start) / 100);
+          this.bounds[i - 1].setAttribute('cx', pt.x.toFixed(2));
+          this.bounds[i - 1].setAttribute('cy', pt.y.toFixed(2));
+        }
+        start += share;
+      });
+    },
+
+    reveal() { motion.revealRoute(dom.vizMask, dom.vizPin); },
+  };
+
+  /* --- Results (hero) ----------------------------------------------- */
+  function renderResults(result) {
+    const route = currentRoute();
+
+    motion.count(dom.outArrival, result.arrivalMinutes, fmtClock, '--:--');
+    motion.count(dom.outDistance, result.totalDistance, n => fmtNum(n, 1));
+    motion.count(dom.outDuration, result.tripMinutes, fmtDurationHTML);
+    motion.count(dom.outFuel, result.litres, n => fmtNum(n, 2));
+    motion.count(dom.outCost, result.cost, n => fmtNum(n, 2));
+
+    dom.dayBadge.hidden = result.dayOffset < 1;
+    if (result.dayOffset >= 1) dom.dayBadge.textContent = dayLabel(result.dayOffset);
+
+    const approx = result.approx && result.totalDistance != null;
+    dom.approxSign.hidden = !approx;
+    dom.approxNote.hidden = !approx;
+
+    dom.outRoute.textContent = `${originLabel()} → ${route.name}`;
+    dom.outDeparture.textContent = result.departure == null ? '—' : fmtClock(result.departure);
+    dom.vizStartLabel.textContent = originLabel();
+    dom.vizEndLabel.textContent = route.name;
+
+    const hasErrors = !result.segmentsValid || Object.values(result.errors).some(Boolean);
+    dom.heroNotice.hidden = !hasErrors;
+
+    // Предупреждение за скорост
+    if (result.overLimit.length) {
+      dom.alertList.innerHTML = result.overLimit.map(o =>
+        `<li>${escapeHTML(o.name)}: <strong>${fmtNum(o.speed, 0)} км/ч</strong> при ограничение ${o.limit} км/ч</li>`
+      ).join('');
+      dom.alert.hidden = false;
+    } else {
+      dom.alert.hidden = true;
+    }
+
+    // Легенда на маршрута
+    dom.legend.innerHTML = state.segments.map((seg, i) => {
+      const d = result.perSegment[i].dist;
+      const km = d == null ? '—' : `${seg.approx ? '≈ ' : ''}${fmtNum(d, 1)} км`;
+      return `<li><span class="swatch" style="--c:${segColor(i)}"></span>
+        <span class="route-legend__name">${escapeHTML(seg.name)}</span>
+        <span class="route-legend__km">${km}</span></li>`;
+    }).join('');
+
+    viz.update(result);
+    renderEtaBar(result);
+    scheduleSummary(result);
+  }
+
+  function renderEtaBar(result) {
+    dom.etaTime.textContent = result.arrivalMinutes == null ? '--:--' : fmtClock(result.arrivalMinutes);
+    const parts = [];
+    if (result.totalDistance != null) parts.push(`<strong>${result.approx ? '≈ ' : ''}${fmtNum(result.totalDistance, 1)} км</strong>`);
+    if (result.cost != null) parts.push(`${fmtNum(result.cost, 2)} €`);
+    dom.etaMeta.innerHTML = parts.join('<br>');
+  }
+
+  // Едно обобщение за екранни четци, без да „спами“ по време на count-up
+  let summaryTimer = 0;
+  function buildSummary(r) {
+    const route = currentRoute();
+    const parts = [];
+    if (r.arrivalMinutes != null) {
+      parts.push(`Пристигане в ${route.name} в ${fmtClock(r.arrivalMinutes)}${r.dayOffset ? ` (${dayLabel(r.dayOffset)})` : ''}.`);
+    }
+    if (r.totalDistance != null) {
+      parts.push(`Разстояние ${r.approx ? 'приблизително ' : ''}${fmtNum(r.totalDistance, 1)} км.`);
+      parts.push(`Време в път ${fmtDuration(r.tripMinutes)}.`);
+    }
+    if (r.litres != null) parts.push(`Гориво ${fmtNum(r.litres, 2)} литра.`);
+    if (r.cost != null) parts.push(`Цена ${fmtNum(r.cost, 2)} евро.`);
+    if (r.overLimit.length) parts.push(TEXT.warning);
+    if (!r.segmentsValid || Object.values(r.errors).some(Boolean)) parts.push(TEXT.invalidNotice);
+    return parts.join(' ');
+  }
+  function scheduleSummary(result) {
+    clearTimeout(summaryTimer);
+    summaryTimer = setTimeout(() => {
+      const text = buildSummary(result);
+      if (dom.srSummary.textContent !== text) dom.srSummary.textContent = text;
+    }, CONFIG.summaryDelayMs);
+  }
+
+  /* --- GPS UI -------------------------------------------------------- */
+  function renderGps() {
+    const { status, message } = state.gps;
+    dom.gpsBtn.dataset.state = status;
+    dom.gpsBtn.setAttribute('aria-busy', String(status === 'loading'));
+    dom.gpsLabel.textContent = TEXT.gpsLabel[status];
+    dom.gpsPill.hidden = !message;
+    dom.gpsPill.className = `pill pill--${status}`;
+    dom.gpsPillText.textContent = message;
+  }
+
+  /* --- Главен цикъл -------------------------------------------------- */
+  function update(source = null, { reveal = false } = {}) {
+    const result = calculate();
+    renderTripFields(result);
+    renderSegmentStates(result, source);
+    renderResults(result);
+    if (reveal) viz.reveal();
+    return result;
+  }
+
+  /* ===================================================================
+     8. GPS
+     =================================================================== */
+
+  const gps = {
+    locate() {
+      if (state.gps.status === 'loading') return;
+      if (!('geolocation' in navigator)) {
+        setGps('error', TEXT.gpsUnsupported);
+        return;
+      }
+      const requestId = ++state.gps.requestId;
+      const routeKey = state.routeKey;
+      setGps('loading', TEXT.gpsLocating);
+
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          // Игнорира остарял отговор (напр. сменен маршрут междувременно)
+          if (requestId !== state.gps.requestId || routeKey !== state.routeKey) return;
+          gps.apply(pos.coords.latitude, pos.coords.longitude);
+        },
+        err => {
+          if (requestId !== state.gps.requestId) return;
+          setGps('error', gps.errorMessage(err));
+        },
+        { enableHighAccuracy: true, timeout: CONFIG.gpsTimeoutMs }
+      );
+    },
+
+    // Права линия × 1.28 ≈ км по пътя. Останалите отсечки запазват базовите си км.
+    apply(lat, lng) {
+      const route = currentRoute();
+      const roadKm = haversineKm(lat, lng, route.lat, route.lng) * CONFIG.gpsRoadFactor;
+      const restKm = getRouteSegments(route).slice(1).reduce((sum, s) => sum + s.dist, 0);
+      const firstKm = Math.max(CONFIG.gpsMinFirstSegment, roadKm - restKm);
+
+      state.origin = 'gps';
+      state.segments[0].dist = fmtNum(firstKm, 1);
+      state.segments[0].approx = true;
+      setGps('success', `≈ приблизително ${fmtNum(roadKm, 0)} км по пътя до ${route.name} (права линия × 1,28). Километрите са преизчислени.`);
+
+      renderTimeline();
+      update(null, { reveal: true });
+    },
+
+    cancel() {
+      state.gps.requestId++;
+      state.gps.status = 'idle';
+      state.gps.message = '';
+    },
+
+    errorMessage(err) {
+      switch (err && err.code) {
+        case 1: return TEXT.gpsDenied;
+        case 2: return TEXT.gpsUnavailable;
+        case 3: return TEXT.gpsTimeout;
+        default: return `${TEXT.gpsGenericError}: ${err && err.message ? err.message : 'неизвестна грешка'}`;
+      }
+    },
+  };
+
+  function setGps(status, message) {
+    state.gps.status = status;
+    state.gps.message = message;
+    renderGps();
+  }
+
+  /* ===================================================================
+     9. EVENTS & INIT
+     =================================================================== */
+
+  function selectRoute(key) {
+    if (!findRoute(key)) return;
+    gps.cancel();                 // смяната на маршрута ресетира GPS (както досега)
+    loadRoute(key);
+    renderTimeline();
+    viz.build();
+    renderGps();
+    update(null, { reveal: true });
+    revealActiveChip();
+  }
+
+  const TRIP_FIELDS = {
+    'departure-time': 'departure',
+    'fuel-consumption': 'consumption',
+    'fuel-price-eur': 'price',
+  };
+
+  function onTripInput(e) {
+    const key = TRIP_FIELDS[e.target.id];
+    if (!key) return;
+    state.trip[key] = e.target.value;
+    update(e.target);
+  }
+
+  function onSegmentInput(e) {
+    const t = e.target;
+    const seg = state.segments[Number(t.dataset.index)];
+    if (!seg) return;
+    switch (t.dataset.field) {
+      case 'dist':
+        seg.dist = t.value;
+        seg.approx = false;       // ръчно въведени км вече не са приблизителни
+        break;
+      case 'speed':
+        seg.speed = t.value;
+        break;
+      case 'speed-range':
+        seg.speed = t.value;
+        t.closest('.field').querySelector('[data-field="speed"]').value = t.value;
+        break;
+      default:
+        return;
+    }
+    update(t);
+  }
+
+  function bindEvents() {
+    dom.destScroller.addEventListener('change', e => {
+      if (e.target.name === 'destination') selectRoute(e.target.value);
+    });
+
+    [dom.departure, dom.consumption, dom.price].forEach(input => {
+      input.addEventListener('input', onTripInput);
+      input.addEventListener('change', onTripInput);
+    });
+
+    dom.timeline.addEventListener('input', onSegmentInput);
+
+    document.addEventListener('focusout', e => {
+      const t = e.target;
+      if (t.classList && t.classList.contains('control__input') && t.id && !state.touched.has(t.id)) {
+        state.touched.add(t.id);
+        update(t);
+      }
+    });
+
+    dom.gpsBtn.addEventListener('click', () => gps.locate());
+
+    dom.recalcBtn.addEventListener('click', () => {
+      motion.spinOnce(dom.recalcBtn);
+      update(null, { reveal: true });
+    });
+
+    dom.etaBar.addEventListener('click', () => {
+      document.getElementById('results').scrollIntoView({ behavior: motion.enabled ? 'smooth' : 'auto', block: 'start' });
+    });
+  }
+
+  // Плаваща лента с часа на пристигане, когато hero картата е извън екрана (mobile)
+  function initEtaBar() {
+    if (!('IntersectionObserver' in window)) return;
+    new IntersectionObserver(([entry]) => {
+      const passed = !entry.isIntersecting && entry.boundingClientRect.top < 0;
+      dom.etaBar.classList.toggle('is-visible', passed);
+    }).observe(dom.arrival);
+  }
+
+  function init() {
+    cacheDom();
+    loadRoute(state.routeKey);
+
+    dom.departure.value = state.trip.departure;
+    dom.consumption.value = state.trip.consumption;
+    dom.price.value = state.trip.price;
+
+    renderDestinations();
+    renderTimeline();
+    viz.build();
+    renderGps();
+
+    // Начални стойности за count-up: числата „тръгват“ от нула, часът — от тръгването
+    const start = parseTime(state.trip.departure);
+    motion.set(dom.outArrival, start, fmtClock);
+    motion.set(dom.outDistance, 0, n => fmtNum(n, 1));
+    motion.set(dom.outDuration, 0, fmtDurationHTML);
+    motion.set(dom.outFuel, 0, n => fmtNum(n, 2));
+    motion.set(dom.outCost, 0, n => fmtNum(n, 2));
+
+    bindEvents();
+    initEtaBar();
+    update(null, { reveal: true });
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
